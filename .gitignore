@@ -1,4 +1,4 @@
-﻿# Dart / Flutter
+# Dart / Flutter
 .dart_tool/
 .packages
 build/
@@ -22,3 +22,17 @@ pubspec.lock
 # OS
 .DS_Store
 Thumbs.db
+
+# Credentials
+# The account layer never writes cookies to disk (only InMemoryBilibiliCookieStore
+# is shipped), and every fixture uses de-sensitized placeholder values. These
+# patterns are a guard in case an application points a custom BilibiliCookieStore
+# at the repository, or a helper script stores a test cookie in a local env file.
+*.cookies.json
+*.cookie-store.json
+bilibili_account_cookies.json
+.bilibili-cookies*
+cookies.txt
+.env
+.env.*
+*.local.ps1

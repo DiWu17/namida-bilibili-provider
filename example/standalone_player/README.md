@@ -1,4 +1,4 @@
-﻿# Standalone Player
+# Standalone Player
 
 This Flutter app is the Stage 5 proof that the provider can resolve and play
 real public Bilibili DASH streams without Namida or YoutiPie.
@@ -65,6 +65,100 @@ flutter create --platforms=android,ios,linux,macos,web .
 ```
 
 Then run `flutter run` for the desired device.
+
+## Account, login and favorites
+
+The app has an account panel at the top and a favorite browser at the bottom, so
+the account layer can be exercised by hand.
+
+```text
+[ 未登录（匿名访问） ]  [ 登录 ]
+        |
+        v  scan the QR with the Bilibili app (or paste a Cookie as a fallback)
+[ 头像 + 昵称 ]  [ 刷新账号信息 / 继续浏览但不再发送 Cookie / 退出当前账号 / 清除已保存的 Cookie ]
+        |
+        v
+[ 收藏夹 ]  [ 刷新 ]  ->  folder list  ->  items  ->  tap to load into the player
+```
+
+### Signing in by scanning (default)
+
+1. Tap 登录.
+2. The dialog opens on 扫码登录 and shows a QR code.
+3. Scan it with the Bilibili mobile app and confirm on the phone.
+4. The status line walks through 请扫描 -> 已扫码，请在手机上确认 -> 登录成功, and the
+   dialog closes by itself.
+
+`BilibiliAccountManager.signInWithQrCode()` drives this: it requests a ticket from
+`passport.bilibili.com`, polls until the platform confirms, then validates the
+delivered cookies through `nav` before adopting them. The QR image comes from
+`BilibiliQrLoginStatus.login.uri`; the ticket is a login credential, so it is never
+printed and the dialog never renders it as text. If the code expires, 刷新二维码
+issues a new one.
+
+No password, captcha, or browser profile is involved: you authenticate in
+Bilibili's own app, on your own device.
+
+### Signing in by pasting a Cookie (fallback)
+
+Only needed when scanning is impossible. Switch the dialog to 手动输入 Cookie and
+paste the value of the `Cookie` request header from your own browser
+(DevTools -> Network -> any `api.bilibili.com` request -> Request Headers).
+
+Include at least:
+
+```text
+SESSDATA      required for every authenticated request
+bili_jct      required for favorite add/remove
+DedeUserID    gives the account key before the first request
+```
+
+The dialog reports only which cookie **names** it recognized and disables the
+login button when `SESSDATA` is missing, so it is obvious whether the paste was
+complete. Values are never displayed. Anything the app requires is explicit user
+input: it never reads a browser profile, never touches a keychain, and never asks
+for a password.
+
+### Where the cookie is stored
+
+```text
+%APPDATA%\namida_bilibili_provider\bilibili_account_cookies.json
+```
+
+The login dialog shows the exact path. The file is **plain text**, protected only
+by the per-user permissions of the application data directory, which is why the
+dialog has a "保存到本机" switch (it applies to both login paths):
+
+- switch on -> `ConditionalBilibiliCookieStore.persist = true`, the manager writes
+  the file and the next launch signs in automatically;
+- switch off -> writes are dropped, the cookies live in memory for this run only,
+  and any previously saved file is left untouched.
+
+Use "清除已保存的 Cookie 并退出" to delete the file. Neither the cookie nor the file
+contents are ever logged, and stream URLs are never printed either.
+
+### Playing from favorites
+
+Favorites carry a BVID but no CID, so tapping an item calls
+`BilibiliProvider.resolveById()` (one metadata request) and only then
+`getPlayback()`. That path is the same one a thin Namida adapter would use.
+
+`加载更多` walks the folder page by page (`ps=20`), and items Bilibili marks as
+expired are hidden with a count so the list stays playable.
+
+## Testing without the UI
+
+The account layer itself is covered by the package test suites; see
+[docs/BILIBILI_ACCOUNT_LAYER.md](../../docs/BILIBILI_ACCOUNT_LAYER.md) section 6:
+
+```powershell
+cd packages/bilibili_provider
+dart test                                              # 206 offline tests
+
+$env:BILIBILI_TEST_COOKIES = 'SESSDATA=...; bili_jct=...; DedeUserID=...'
+dart test --tags authenticated --run-skipped            # read-only, your account
+dart run tool/bilibili_account_check.dart               # manual diagnostics
+```
 
 ## Windows media_kit download troubleshooting
 

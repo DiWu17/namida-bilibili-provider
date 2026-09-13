@@ -1,10 +1,14 @@
 import 'dart:async';
 
 import 'package:bilibili_provider/bilibili_provider.dart';
+import 'package:bilibili_provider/io.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:online_media_provider/online_media_provider.dart';
+
+import 'account_ui.dart';
+import 'bilibili_format.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +44,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
   final _urlController = TextEditingController(
     text: 'https://www.bilibili.com/video/BV17xeRz9EJs/',
   );
-  final _provider = BilibiliProvider();
+
+  /// Auth provider shared by the account layer and playback, so signing in
+  /// changes what both of them send.
+  final BilibiliAccountAuthProvider _auth = BilibiliAccountAuthProvider();
+
+  /// Cookie file under the per-user application data directory. Plain text, so
+  /// the login dialog asks before persisting.
+  late final PlainTextFileBilibiliCookieStore _fileStore =
+      PlainTextFileBilibiliCookieStore();
+
+  /// Lets the login dialog decide whether this sign-in may be persisted.
+  late final ConditionalBilibiliCookieStore _cookieStore =
+      ConditionalBilibiliCookieStore(_fileStore);
+
+  late final BilibiliAccountManager _account = BilibiliAccountManager(
+    authProvider: _auth,
+    cookieStore: _cookieStore,
+  );
+
+  late final BilibiliProvider _provider = BilibiliProvider(auth: _auth);
 
   late final Player _videoPlayer;
   late final Player _audioPlayer;
@@ -75,7 +98,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _urlController.dispose();
     unawaited(_videoPlayer.dispose());
     unawaited(_audioPlayer.dispose());
+    unawaited(_account.dispose());
     super.dispose();
+  }
+
+  /// Picks the selected part of [media], falling back to the first part.
+  static OnlineMediaPart? _partFor(OnlineMedia media) {
+    if (media.parts.isEmpty) {
+      return null;
+    }
+    return media.parts.firstWhere(
+      (part) => part.id == media.id.subId,
+      orElse: () => media.parts.first,
+    );
   }
 
   Future<void> _resolve() async {
@@ -97,21 +132,53 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     try {
       final media = await _provider.resolve(uri);
-      OnlineMediaPart? selectedPart;
-      if (media.parts.isNotEmpty) {
-        selectedPart = media.parts.firstWhere(
-          (part) => part.id == media.id.subId,
-          orElse: () => media.parts.first,
-        );
-      }
       if (!mounted) {
         return;
       }
       setState(() {
         _media = media;
-        _selectedPart = selectedPart;
+        _selectedPart = _partFor(media);
       });
       await _loadPlayback(media.id);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = '$error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolving = false;
+        });
+      }
+    }
+  }
+
+  /// Loads an item that came from the account layer (a favorite, for example).
+  ///
+  /// Favorite entries carry a BVID but no CID, so one metadata request fills in
+  /// the parts before playback.
+  Future<void> _playMedia(OnlineMedia item) async {
+    setState(() {
+      _resolving = true;
+      _error = null;
+      _playing = false;
+    });
+
+    try {
+      final resolved = await _provider.resolveById(item.id);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _media = resolved;
+        _selectedPart = _partFor(resolved);
+        _urlController.text =
+            'https://www.bilibili.com/video/${resolved.id.id}';
+      });
+      await _loadPlayback(resolved.id);
     } catch (error) {
       if (!mounted) {
         return;
@@ -277,6 +344,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            BilibiliAccountCard(
+              manager: _account,
+              cookieStore: _cookieStore,
+              storageDescription: _fileStore.file.path,
+            ),
+            const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -361,6 +434,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 onSeek: _seek,
               ),
             ],
+            const SizedBox(height: 12),
+            BilibiliFavoritesCard(manager: _account, onPlay: _playMedia),
           ],
         ),
       ),
@@ -432,7 +507,7 @@ class _MetadataCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text('UP: ${media.artist ?? 'unknown'}'),
-                Text('Duration: ${_formatDuration(media.duration)}'),
+                Text('Duration: ${formatDuration(media.duration)}'),
                 Text('Parts: ${media.parts.length}'),
               ],
             ),
@@ -628,8 +703,8 @@ class _PlayerCard extends StatelessWidget {
                       },
                     ),
                     Text(
-                      '${_formatDuration(position)} / '
-                      '${_formatDuration(duration)}',
+                      '${formatDuration(position)} / '
+                      '${formatDuration(duration)}',
                     ),
                   ],
                 );
@@ -651,17 +726,4 @@ class _PlayerCard extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatDuration(Duration? duration) {
-  if (duration == null) {
-    return 'unknown';
-  }
-  final hours = duration.inHours;
-  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-  if (hours > 0) {
-    return '$hours:$minutes:$seconds';
-  }
-  return '$minutes:$seconds';
 }

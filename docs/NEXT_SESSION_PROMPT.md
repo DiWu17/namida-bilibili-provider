@@ -1,4 +1,4 @@
-﻿# Next Session Prompt
+# Next Session Prompt
 
 把下面整段内容复制给新会话。
 
@@ -13,9 +13,9 @@ D:\python\namida-bilibili-provider
 先阅读：
 
 ```text
+docs/BILIBILI_ACCOUNT_LAYER.md
 docs/INTERFACE_GAP_ANALYSIS.md
-docs/NAMIDA_INTEGRATION.md
-reference_patch/
+docs/ARCHITECTURE.md
 ```
 
 当前项目已经完成：
@@ -25,142 +25,98 @@ Stage 0-7
 普通公开 Bilibili 视频播放 provider
 standalone Flutter real playback
 Namida reference integration analysis
+
+Stage 8  账号基础：CookieStore / BilibiliAccountSession / 当前账号 / 账号切换 / signOut / setAnonymous
+Stage 9  收藏夹：favlist 链接解析、收藏夹列表、收藏夹内容分页、OnlineMedia 映射、收藏/取消收藏
 ```
 
-现在要进入新的阶段：**对齐 Namida / YoutiPie 的账号与个人数据接口方案，为 Bilibili 实现独立的账号/个人数据层。**
-
-目标不是 fork Namida，也不是重写 Namida，而是：
+现有可用接口（不要重复实现）：
 
 ```text
-Bilibili provider 侧把 login、cookie、账号信息、收藏夹、历史、订阅、
-用户播放列表等能力做好；
-未来 Namida 只需要写很薄的 adapter。
+BilibiliCookies / BilibiliCookieStore / BilibiliCookieStoreState / InMemoryBilibiliCookieStore
+BilibiliAccountSession / BilibiliSessionState / BilibiliCookieValidity
+BilibiliAccountAuthProvider
+BilibiliAccountManager
+    restore / signIn / signInWithCookies / switchAccount / signOut / signOutAll
+    setAnonymous / getCurrentAccount / validateActiveCookies
+    createMediaProvider / onAccountChanged / signedInAccounts
+BilibiliAccountClient
+    getNav / getMyInfo
+    getCreatedFavoriteFolders / getFavoriteFolderInfo / getFavoriteResources
+    paginateFavoriteResources / getAllFavoriteMedia / getFavoriteResourcesFromUri
+    addFavorite / removeFavorite / dealFavorite
+BilibiliAccountParser
+BilibiliFavListUrlParser
+BilibiliProvider.resolveById        # 补齐收藏夹条目的 CID
+BilibiliHttpTransport               # 唯一挂载 Cookie 的位置
 ```
 
-请参考 Namida 公开源码：
+现在进入下一阶段：**继续实现账号/个人数据层的历史、关注/订阅、用户播放列表。**
+
+不要 fork Namida，不要重写 Namida，不要依赖 youtipie。参考公开源码的接口形状：
 
 ```text
-https://github.com/namidaco/namida
-```
-
-重点参考这些文件和接口：
-
-```text
-lib/youtube/controller/youtube_account_controller.dart
-lib/youtube/controller/youtube_playlist_controller.dart
-lib/youtube/controller/youtube_subscriptions_controller.dart
 lib/youtube/controller/youtube_history_controller.dart
+lib/youtube/controller/youtube_subscriptions_controller.dart
+lib/youtube/controller/youtube_playlist_controller.dart
 lib/youtube/controller/youtube_info_controller.dart
-lib/base/audio_handler.dart
 ```
 
-以及 YoutiPie 用法：
+本轮建议实现：
 
 ```text
-YoutiAccountManager.signIn(...)
-YoutiPie.cookies
-YoutiPie.activeAccountDetails
-YoutiPie.userplaylist
-YoutiPie.userchannel
-YoutiPie.history
-YoutiPie.feed
-YoutiPie.search
-YoutiPie.comment
-YoutiPie.commentAction
-YoutiPie.notificationsAction
-YoutiPie.sponsorblock
-YoutiPie.returnyoutubedislike
-YoutiPie.potoken
-```
+Stage 10  历史记录
+  - GET x/v2/history（分页、cursor/max、business 过滤）
+  - 映射为 OnlineMedia（沿用 BilibiliAccountParser.toOnlineMedia 的模式）
+  - 可选 mark watched / 删除单条历史（写操作，需要 bili_jct csrf）
+  - 历史条目同样没有 CID，必须走 BilibiliProvider.resolveById
 
-注意：
+Stage 11  关注 / 订阅
+  - GET x/relation/followings（分页）
+  - 关注 UP 主模型：mid / uname / face / sign / 认证信息 / 粉丝数
+  - 可选：UP 主投稿/动态列表 -> OnlineMedia
+  - 可选：关注 / 取关（写操作，需要 csrf）
 
-```text
-YoutiPie 是 private dependency，只用于理解接口设计。
-不要把 Bilibili 数据伪装成 YouTube 数据。
-不要实现 DRM / 会员 / 付费 / 地区限制绕过。
-不要做浏览器 cookie 窃取。
-所有认证信息必须由用户显式提供或通过正常登录流程获得。
-默认 debug logging 必须关闭。
-绝对不要打印 Cookie / SESSDATA / csrf / Authorization。
-```
-
-第一阶段建议实现：
-
-```text
-1. Bilibili 登录/账号基础
-   - BilibiliAuthProvider 扩展
-   - CookieStore
-   - BilibiliAccountSession
-   - getCurrentAccount()
-   - signOut()
-   - setAnonymous()
-   - cookie 校验 / 过期处理
-
-2. 用户信息
-   - x/web-interface/nav
-   - x/space/myinfo
-   - 当前用户 mid / name / avatar / 登录状态
-   - 账号切换接口
-
-3. 收藏夹
-   - 解析收藏夹链接
-     https://space.bilibili.com/<mid>/favlist?fid=<id>&ftype=create
-   - 获取收藏夹列表
-   - 获取收藏夹视频
-   - 映射为 OnlineMedia / OnlineMediaPart
-   - 支持分页
-   - 支持收藏/取消收藏普通视频
-
-4. 历史记录
-   - 获取当前账号历史
-   - 映射为 OnlineMedia
-   - 可选 mark watched
-
-5. 订阅 / 关注
-   - 获取关注列表
-   - 获取关注 UP 主
-   - 获取 UP 主投稿或动态（如果需要）
-
-6. 用户播放列表
-   - 获取用户创建的播放列表 / 合集
-   - 获取播放列表内容
-   - 映射为 OnlineMedia 列表
+Stage 12  用户播放列表 / 合集
+  - GET x/polymer/web-space/seasons_series_list
+  - GET x/polymer/web-space/seasons_archives_list
+  - 映射为 OnlineMedia 列表
 ```
 
 架构要求：
 
 ```text
-provider-neutral DTO 继续放在 online_media_provider
-Bilibili 账号 API 实现放在 bilibili_provider
-HTTP 调用放在 BilibiliClient 或新的 BilibiliAccountClient
-parser 放在 bilibili_provider/lib/src/parser
-fixtures 放在 bilibili_provider/test/fixtures
-不要破坏现有 BilibiliProvider.resolve/getPlayback 行为
+provider-neutral DTO 继续放在 online_media_provider（尽量不改）
+Bilibili 专属模型放在 bilibili_provider/lib/src/models/
+HTTP 调用放进 BilibiliAccountClient，复用 BilibiliHttpTransport
+parser 放在 bilibili_provider/lib/src/parser/
+fixtures 放在 bilibili_provider/test/fixtures/
+不要破坏 BilibiliProvider.resolve / getPlayback / resolveById 行为
+新增 API 一律 additive；需要新 DTO 时放在 models/bilibili_account_api_models.dart 或新文件
 ```
 
-推荐新增文档：
+安全要求（与 Stage 8-9 一致，测试必须覆盖）：
 
 ```text
-docs/BILIBILI_ACCOUNT_LAYER.md
-docs/INTERFACE_GAP_ANALYSIS.md   # 持续更新
+默认匿名；只有显式 signIn 之后才带 Cookie
+Cookie / SESSDATA / bili_jct / csrf 不得进入日志或异常 message
+新增类型的 toString() 必须脱敏
+写操作必须显式传入/读取 csrf，绝不自动重试
+只访问用户自己有权访问的内容
+不实现 DRM / 会员 / 付费 / 地区限制绕过
+不做浏览器 cookie 窃取
 ```
 
-推荐新增 package 或目录二选一：
+测试要求：
 
 ```text
-packages/bilibili_provider/lib/src/account/
+offline tests 不访问网络，全部使用 MockClient + fixtures
+online tests 继续 @Tags(['online'])，且尽量不依赖账号 cookie
+写操作要断言：无 csrf 时不发请求、csrf 不出现在异常里
+分页要有 maxPages 之类的硬上限
 ```
 
-或：
-
-```text
-packages/bilibili_account/
-```
-
-不要一次实现所有搜索、评论、弹幕、直播、番剧、下载和账户同步。
-
-按照 Stage 方式推进并每阶段报告：
+Stage 报告格式：
 
 ```text
 Stage
@@ -170,34 +126,4 @@ Tests
 Observed behavior
 Problems
 Next step
-```
-
-测试要求：
-
-```text
-普通 offline tests 不访问网络
-online tests 继续使用 @Tags(['online'])
-不要每次 commit 都强制依赖 Bilibili 网络
-```
-
-安全要求：
-
-```text
-默认匿名
-用户显式提供 cookie 或登录后才走认证接口
-Cookie 不写入 git
-Cookie 不写入日志
-Cookie 不进入异常 message
-只访问用户正常有权访问的内容
-```
-
-请先阅读 `docs/INTERFACE_GAP_ANALYSIS.md`，然后：
-
-```text
-1. 检查当前仓库结构
-2. 确认哪些接口已完成 / 未完成
-3. 设计 BilibiliAccountClient 和 DTO
-4. 优先实现 CookieStore + 当前账号信息 + 收藏夹
-5. 写 offline fixture tests
-6. 报告第一阶段
 ```

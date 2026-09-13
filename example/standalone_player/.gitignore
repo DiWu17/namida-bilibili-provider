@@ -1,4 +1,4 @@
-﻿.dart_tool/
+.dart_tool/
 .packages
 build/
 .flutter-plugins
@@ -9,3 +9,10 @@ macos/Flutter/ephemeral/
 .idea/
 .vscode/
 *.iml
+
+# The login dialog stores cookies under %APPDATA%, never in the repo. These
+# patterns only guard against a store that was pointed at the checkout.
+bilibili_account_cookies.json
+*.cookies.json
+.env
+.env.*
