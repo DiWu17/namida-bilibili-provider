@@ -63,7 +63,7 @@ Bilibili provider today. Namida currently depends on private packages.
 | `preferredAudioQualityId` support | `OnlinePlaybackOptions.preferredAudioQualityId` exists but is not used for filtering |  |
 | Muxed fallback | `OnlineMuxedStream` + `allowMuxedFallback` |  |
 | Stream URL expiration | `OnlineStream.expiresAt` inferred from URL/API |  partial |
-| Stream `hasExpired()` method | No method; callers compare `expiresAt` or re-resolve |  |
+| Stream `hasExpired()` method | `OnlineStreamExpiry.isExpired` extension on `OnlineStream` |  |
 | Player source creation via `buildUrl()` | `OnlineStream.url` |  |
 | Player header handling | `OnlineStream.headers` |  |
 | Backup URL handling | `OnlineStream.backupUrls` |  |

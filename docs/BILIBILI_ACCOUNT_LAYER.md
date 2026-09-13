@@ -3,11 +3,12 @@
 Status:
 
 ```text
-Stage 8  account foundation (cookies, session, current account)   implemented + offline tested
-Stage 9  favorites (favlist links, folders, items, writes)        implemented + offline tested
-Stage 10 history                                                  not started
-Stage 11 subscriptions / following                                not started
-Stage 12 user playlists / collections                             not started
+Stage 8   account foundation (cookies, store, session, current account)  implemented + offline tested
+Stage 9   favorites (favlist links, folders, items, writes)              implemented + offline tested
+Stage 9b  scan-to-login (QR) and the in-app login/favorites UI           implemented + verified by hand
+Stage 10  history                                                        not started
+Stage 11  subscriptions / following                                      not started
+Stage 12  user playlists / collections                                   not started
 ```
 
 This document describes the Bilibili-side account layer. It is a Bilibili-only
@@ -386,8 +387,8 @@ that wants to show the gap.
 ## 5. Namida / YoutiPie mapping
 
 Interface-shape comparison only. Namida's YoutiPie types are private and are not
-compiled here; see [NAMIDA_INTEGRATION.md](NAMIDA_INTEGRATION.md) for the playback
-boundary and its warnings.
+compiled here. The playback boundary and its warnings are in
+[INTERFACE_REFERENCE.md](INTERFACE_REFERENCE.md).
 
 | Namida / YoutiPie surface | Bilibili account layer | State |
 |---|---|---|

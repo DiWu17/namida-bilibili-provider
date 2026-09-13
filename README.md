@@ -266,25 +266,25 @@ flutter create --platforms=android,ios,linux,macos,web .
 
 ## Namida integration boundary
 
-Namida currently has no formal provider interface; its playable dispatch mainly
-recognizes `Selectable`/`YoutubeID`, and its stream types come from YoutiPie.
-This project does **not** claim a tested Namida integration. We provide a
-reference adapter and minimal integration proposal for the Namida maintainer to
-evaluate after the provider itself is tested.
+Namida has no formal provider interface yet: its playable dispatch recognizes only
+`Selectable` and `YoutubeID`, and its stream types come from the private
+`youtipie` package. This project therefore does **not** claim a tested Namida
+integration — there is no adapter here to test.
 
-See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
+What exists instead:
 
-## Known limitations
+- [docs/INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md) — the complete public
+  surface, the HTTP endpoints, and what a player adapter has to do;
+- [docs/INTERFACE_GAP_ANALYSIS.md](docs/INTERFACE_GAP_ANALYSIS.md) — the
+  Namida/YoutiPie interface compared row by row, and what is still missing;
+- [docs/NAMIDA_UPSTREAM_ISSUE.md](docs/NAMIDA_UPSTREAM_ISSUE.md) — a draft feature
+  request describing the one dispatch gap that blocks a third-party provider.
 
-- Anonymous/public ordinary videos plus the signed-in user's own account data.
-- Sign-in is explicit-cookie only: no QR, password, or SMS login flow yet.
-- No encrypted cookie store implementation is shipped; only the
-  `BilibiliCookieStore` boundary and an in-memory default.
-- No history, subscriptions, or user playlists/collections yet (Stages 10-12).
-- No paid, DRM, region-locked, or member-only bypass.
-- No live, bangumi, comments, danmaku, search, or recommendations.
-- Standalone playback is manually verified on Windows; other platform folders are not included/verified by default.
-- The first Windows media_kit build downloads libmpv/ANGLE from GitHub release assets; restricted networks may need the offline workaround in `example/standalone_player/README.md`.
+## Limits
+
+See [docs/LIMITATIONS.md](docs/LIMITATIONS.md) for the single authoritative list of
+what this project does and does not do, including the plain-text cookie store
+caveat and the platform verification status.
 
 ## Development stages
 
@@ -294,10 +294,13 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - [x] Stage 3  DASH playback resolver
 - [x] Stage 4  stream HTTP validation
 - [x] Stage 5  standalone Flutter player
-- [x] Stage 6  complete documentation
-- [x] Stage 7  optional untested Namida reference adapter
+- [x] Stage 6  documentation
+- [x] Stage 7  untested Namida reference adapter (replaced by
+      `docs/INTERFACE_REFERENCE.md` and the upstream issue draft; the old
+      `reference_patch/` analysis is in git history at `f0fcbe4`)
 - [x] Stage 8  account foundation: cookies, cookie store, session, current account
 - [x] Stage 9  favorites: favlist URLs, folders, paging, add/remove, playback bridge
+- [x] Stage 9b scan-to-login (QR) and the in-app login/favorites UI
 - [ ] Stage 10 history
 - [ ] Stage 11 following / subscriptions
 - [ ] Stage 12 user playlists / collections

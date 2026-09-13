@@ -3,8 +3,9 @@
 - The provider targets ordinary public Bilibili videos plus the signed-in user's
   own account data (current profile and favorites).
 - Anonymous access is the default. The account layer only sends credentials after
-  an explicit `BilibiliAccountManager.signIn` with user-supplied cookies.
-- Sign-in is cookie-only: there is no QR-code, password, or SMS login flow.
+  an explicit sign-in: scan-to-login (`signInWithQrCode`) or user-supplied cookies
+  (`signIn` / `signInWithCookies`).
+- There is no password or SMS login flow, and none is planned.
 - The default cookie store is in-memory, so nothing is written to disk unless the
   application opts in. The shipped opt-in store,
   `PlainTextFileBilibiliCookieStore` (`package:bilibili_provider/io.dart`), keeps
@@ -47,8 +48,25 @@
 
 ## Platform verification
 
-- Standalone playback was manually verified on Windows.
+Verified on this repository:
+
+- public video `BV17xeRz9EJs` resolved to metadata with a single part, and its DASH
+  response yielded 6 video and 3 audio streams with per-stream headers and backup
+  URLs preserved;
+- the first video and audio stream each answered a `Range: bytes=0-1023` request
+  with HTTP 206 and 1024 bytes, proving the resolved CDN URLs work with the headers
+  the provider attaches;
+- standalone playback and the account UI (scan-to-login, session persistence across
+  restarts, favorites browser) were verified by hand on Windows with
+  `flutter run -d windows`, and `flutter build windows --debug` succeeds.
+
+Not verified:
+
 - Android/iOS/macOS/Linux/web platform folders and playback are not included by
   default and have not been verified.
-- Windows requires the media_kit libmpv/ANGLE archives; restricted networks may
-  need the offline workaround documented in `example/standalone_player/README.md`.
+- Anything against Namida itself; see `NAMIDA_UPSTREAM_ISSUE.md`.
+- The `confirmed` branch of QR login was exercised through fixtures only; the live
+  endpoint was verified up to the `pending` reply.
+
+Windows requires the media_kit libmpv/ANGLE archives; restricted networks may need
+the offline workaround documented in `example/standalone_player/README.md`.

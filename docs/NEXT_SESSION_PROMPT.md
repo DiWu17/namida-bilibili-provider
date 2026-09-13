@@ -13,9 +13,9 @@ D:\python\namida-bilibili-provider
 先阅读：
 
 ```text
+docs/INTERFACE_REFERENCE.md
 docs/BILIBILI_ACCOUNT_LAYER.md
 docs/INTERFACE_GAP_ANALYSIS.md
-docs/ARCHITECTURE.md
 ```
 
 当前项目已经完成：
@@ -24,24 +24,27 @@ docs/ARCHITECTURE.md
 Stage 0-7
 普通公开 Bilibili 视频播放 provider
 standalone Flutter real playback
-Namida reference integration analysis
 
-Stage 8  账号基础：CookieStore / BilibiliAccountSession / 当前账号 / 账号切换 / signOut / setAnonymous
-Stage 9  收藏夹：favlist 链接解析、收藏夹列表、收藏夹内容分页、OnlineMedia 映射、收藏/取消收藏
+Stage 8   账号基础：CookieStore / BilibiliAccountSession / 当前账号 / 账号切换 / signOut / setAnonymous
+Stage 9   收藏夹：favlist 链接解析、收藏夹列表、收藏夹内容分页、OnlineMedia 映射、收藏/取消收藏
+Stage 9b  扫码登录（QR）+ 应用内登录/收藏夹 UI（已在 Windows 手动验证）
 ```
 
 现有可用接口（不要重复实现）：
 
 ```text
 BilibiliCookies / BilibiliCookieStore / BilibiliCookieStoreState / InMemoryBilibiliCookieStore
+ConditionalBilibiliCookieStore / PlainTextFileBilibiliCookieStore（package:bilibili_provider/io.dart）
 BilibiliAccountSession / BilibiliSessionState / BilibiliCookieValidity
 BilibiliAccountAuthProvider
 BilibiliAccountManager
-    restore / signIn / signInWithCookies / switchAccount / signOut / signOutAll
-    setAnonymous / getCurrentAccount / validateActiveCookies
+    restore / signIn / signInWithCookies / signInWithQrCode / switchAccount
+    signOut / signOutAll / setAnonymous
+    getCurrentAccount / validateActiveCookies
     createMediaProvider / onAccountChanged / signedInAccounts
+BilibiliQrLogin / BilibiliQrLoginStage / BilibiliQrLoginStatus
 BilibiliAccountClient
-    getNav / getMyInfo
+    getNav / getMyInfo / generateQrLogin / pollQrLogin
     getCreatedFavoriteFolders / getFavoriteFolderInfo / getFavoriteResources
     paginateFavoriteResources / getAllFavoriteMedia / getFavoriteResourcesFromUri
     addFavorite / removeFavorite / dealFavorite

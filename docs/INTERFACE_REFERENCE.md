@@ -681,8 +681,9 @@ Related documents:
 
 - [BILIBILI_ACCOUNT_LAYER.md](BILIBILI_ACCOUNT_LAYER.md) — account layer design,
   sign-in flow, fixtures, and the Namida/YoutiPie mapping table
-- [ARCHITECTURE.md](ARCHITECTURE.md) — layering rules
 - [INTERFACE_GAP_ANALYSIS.md](INTERFACE_GAP_ANALYSIS.md) — Namida/YoutiPie ↔ this
   provider, row by row
-- [NAMIDA_INTEGRATION.md](NAMIDA_INTEGRATION.md) — integration boundary statement
-- [LIMITATIONS.md](LIMITATIONS.md)
+- [LIMITATIONS.md](LIMITATIONS.md) — what this project does not do
+- [NAMIDA_UPSTREAM_ISSUE.md](NAMIDA_UPSTREAM_ISSUE.md) — draft feature request for
+  a pluggable-provider hook
+- [NEXT_SESSION_PROMPT.md](NEXT_SESSION_PROMPT.md) — the next stages of work
