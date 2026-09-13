@@ -8,12 +8,12 @@ Namida or on the private `youtipie` package. The goal is to make the Bilibili
 side complete, testable, and playable on its own so a future Namida adapter only
 has to map a small provider-neutral playback contract into Namida's player.
 
-> Current status: Stage 0-4. The provider-neutral contract, BV/av/b23 URL
-> parser, bounded short-link resolution, metadata/CID mapping, DASH
-> audio/video parsing, and lightweight stream range validation are in place.
-> A real public Bilibili video was manually resolved, its DASH streams were
-> returned, and both first video and audio streams passed HTTP 206 range
-> validation. The standalone Flutter player remains.
+> Current status: Stage 0-5. The provider-neutral contract, URL/metadata/DASH
+> resolution, stream range validation, and a standalone Flutter example are
+> implemented. The example includes metadata/part/quality selectors and a
+> dual media_kit video+audio player for Bilibili DASH. Real public Bilibili
+> metadata, DASH streams, and HTTP 206 range validation were verified. Manual
+> GUI playback still needs to be run in a normal Flutter environment.
 
 ## Problem
 
@@ -112,20 +112,34 @@ Run locally:
 
 ```powershell
 cd packages/online_media_provider
-dart pub get
+flutter pub get
 dart test
 
 cd ../bilibili_provider
-dart pub get
+flutter pub get
 dart test
 ```
 
 ## Standalone demo
 
-The standalone Flutter demo lives under `example/standalone_player/` and will be
-implemented in Stage 5. Its purpose is to prove that the provider can resolve
-and play real public Bilibili DASH streams with no Namida or YoutiPie
-dependency.
+The standalone Flutter example lives under `example/standalone_player/`.
+It uses `media_kit` (mpv-compatible) for video and a second `media_kit`
+player for audio, keeping the provider's separate DASH model intact.
+
+On Windows:
+
+```powershell
+cd example/standalone_player
+flutter pub get
+flutter run -d windows
+```
+
+The included Windows runner proves the app is a real Flutter application.
+For Android/iOS/Linux/macOS/web, generate the missing platform folders once:
+
+```text
+flutter create --platforms=android,ios,linux,macos,web .
+```
 
 ## Namida integration boundary
 
@@ -143,7 +157,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - No login/QR/cookie extraction.
 - No paid, DRM, region-locked, or member-only bypass.
 - No live, bangumi, comments, danmaku, search, or recommendations in the MVP.
-- The standalone Flutter demo and real merged video+audio playback are later stages.
+- The standalone Flutter example is implemented, but GUI playback must be run manually with `flutter run` in a supported desktop/mobile environment.
 
 ## Development stages
 
@@ -152,9 +166,10 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - [x] Stage 2  metadata, uploader, cover, duration, parts, CID resolution
 - [x] Stage 3  DASH playback resolver
 - [x] Stage 4  stream HTTP validation
-- [ ] Stage 5  standalone Flutter player
+- [x] Stage 5  standalone Flutter player
 - [ ] Stage 6  complete documentation
 - [ ] Stage 7  optional untested Namida reference adapter
+
 
 
 

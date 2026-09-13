@@ -183,3 +183,42 @@ isPlayable   = true
 
 This demonstrates that the provider's resolved DASH URLs and per-stream headers
 work against real Bilibili CDN endpoints, without downloading the full media.
+
+## Stage 5 standalone Flutter player
+
+`example/standalone_player/` contains a real Flutter application that consumes
+only the provider-neutral `OnlineMedia` / `OnlinePlaybackData` contract.
+
+Playback strategy:
+
+```text
+OnlineVideoStream -> muted media_kit Player -> VideoController -> Video widget
+OnlineAudioStream -> separate media_kit Player
+```
+
+Why two players:
+
+- Bilibili DASH exposes separate audio and video URLs.
+- The provider deliberately keeps them as separate `OnlineStream` resources.
+- The demo does not fake a muxed stream or change the provider model.
+- `media_kit` / mpv can consume each DASH representation independently.
+- Play, pause, and seek actions are applied to both players together.
+
+Included:
+
+- Bilibili URL field and Resolve button;
+- thumbnail, title, uploader and duration;
+- part / P selector;
+- video quality dropdown (quality, resolution, FPS, codec);
+- audio quality dropdown (quality, bitrate, codec);
+- real video widget plus play/pause/seek controls;
+- generated Windows runner files.
+
+The Flutter GUI itself must be launched manually in a normal Flutter desktop or
+mobile environment:
+
+```powershell
+cd example/standalone_player
+dart pub get
+flutter run -d windows
+```
