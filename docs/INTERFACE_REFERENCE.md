@@ -677,13 +677,8 @@ packages/bilibili_provider/lib/
 example/standalone_player/                   real Flutter app: playback + login + favorites
 ```
 
-Related documents:
+Related:
 
-- [BILIBILI_ACCOUNT_LAYER.md](BILIBILI_ACCOUNT_LAYER.md) — account layer design,
-  sign-in flow, fixtures, and the Namida/YoutiPie mapping table
-- [INTERFACE_GAP_ANALYSIS.md](INTERFACE_GAP_ANALYSIS.md) — Namida/YoutiPie ↔ this
-  provider, row by row
-- [LIMITATIONS.md](LIMITATIONS.md) — what this project does not do
+- [../README.md](../README.md) — introduction, quick start, testing, limits
 - [NAMIDA_UPSTREAM_ISSUE.md](NAMIDA_UPSTREAM_ISSUE.md) — draft feature request for
-  a pluggable-provider hook
-- [NEXT_SESSION_PROMPT.md](NEXT_SESSION_PROMPT.md) — the next stages of work
+  a pluggable-provider hook, if you are integrating this into a player

@@ -148,12 +148,12 @@ expired are hidden with a count so the list stays playable.
 
 ## Testing without the UI
 
-The account layer itself is covered by the package test suites; see
-[docs/BILIBILI_ACCOUNT_LAYER.md](../../docs/BILIBILI_ACCOUNT_LAYER.md) section 6:
+The account layer itself is covered by the package test suites; see the
+[Testing section](../../README.md#testing) of the root README:
 
 ```powershell
 cd packages/bilibili_provider
-dart test                                              # 206 offline tests
+dart test                                              # 231 offline tests
 
 $env:BILIBILI_TEST_COOKIES = 'SESSDATA=...; bili_jct=...; DedeUserID=...'
 dart test --tags authenticated --run-skipped            # read-only, your account

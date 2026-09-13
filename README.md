@@ -188,9 +188,19 @@ dart test --tags authenticated --run-skipped
 dart run tool/bilibili_account_check.dart --folder 200000001
 ```
 
-The authenticated suite also has an opt-in favorite round trip that restores the
-folder to its original state. Procedure and failure table:
-[BILIBILI_ACCOUNT_LAYER.md § 6](docs/BILIBILI_ACCOUNT_LAYER.md#6-testing).
+The authenticated suite also has an opt-in favorite round trip that adds a video to
+a folder, verifies it appears, then removes it and verifies it is gone, leaving the
+folder exactly as it was found. Enable it with `BILIBILI_TEST_WRITE_FOLDER_ID` and
+`BILIBILI_TEST_WRITE_BVID`.
+
+Signals worth knowing when an authenticated check fails:
+
+| Symptom | Meaning |
+|---|---|
+| `BilibiliAuthenticationException`, code `-101` | the cookie expired; sign in again |
+| `BilibiliAuthenticationException`, code `-111` | `bili_jct` is missing or stale |
+| `BilibiliAccessDeniedException` or code `62002`/`62004` | that folder or media is not accessible with these cookies |
+| `BilibiliApiException`, code `-352` | Bilibili risk control; wait, and never retry in a loop |
 
 ## Security model
 
@@ -202,16 +212,26 @@ folder to its original state. Procedure and failure table:
 - `dart:io` is confined to the opt-in `io.dart` entry point;
 - no DRM, membership, paid, or region-lock bypass — only what an anonymous or signed-in user may already watch.
 
+## Limits
+
+- ordinary public videos, plus the signed-in user's own profile and favorites; no
+  history, subscriptions, or user playlists yet;
+- no search, feed, comments, danmaku, live, bangumi, downloads, or subtitles;
+- sign-in is scan-to-login or a user-supplied cookie: there is no password or SMS
+  flow;
+- the shipped file cookie store keeps cookies as **plain text** under the per-user
+  application data directory. Supply a keychain/DPAPI-backed
+  `BilibiliCookieStore` if you need encryption at rest;
+- CDN URLs expire, so call `getPlayback` again instead of caching a URL forever;
+- verified on Windows desktop: playback, scan-to-login, session persistence across
+  restarts, and `flutter build windows --debug`. The QR `confirmed` branch was
+  exercised through fixtures; the live endpoint was verified up to `pending`.
+
 ## Documentation
 
-| Document | What it covers |
-|---|---|
-| [INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md) | **start here** — every type, signature, endpoint, and guarantee |
-| [BILIBILI_ACCOUNT_LAYER.md](docs/BILIBILI_ACCOUNT_LAYER.md) | account layer design, sign-in flow, fixtures, YoutiPie mapping table |
-| [INTERFACE_GAP_ANALYSIS.md](docs/INTERFACE_GAP_ANALYSIS.md) | Namida/YoutiPie compared with this provider, row by row |
-| [LIMITATIONS.md](docs/LIMITATIONS.md) | what it does not do, plus verification status |
-| [NAMIDA_UPSTREAM_ISSUE.md](docs/NAMIDA_UPSTREAM_ISSUE.md) | draft feature request for a pluggable-provider hook |
-| [NEXT_SESSION_PROMPT.md](docs/NEXT_SESSION_PROMPT.md) | the next stages of work |
+Everything public is in one file:
+**[docs/INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md)** — every type and
+signature, the HTTP endpoints, the guarantees, and what a player adapter has to do.
 
 ## Namida integration
 
@@ -225,25 +245,6 @@ side only and makes no claim about a working adapter.
 gap and the smallest hook that would close it, including a verified detail: the
 player can already pass per-stream headers to `AudioVideoSource.uri(...)`, but the
 DASH builder in between does not forward them.
-
-## Status
-
-- [x] Stage 0 — bootstrap, provider-neutral contract, tests, CI
-- [x] Stage 1 — BV/av/b23 URL parser and part parameter
-- [x] Stage 2 — metadata, uploader, cover, duration, parts, CID resolution
-- [x] Stage 3 — DASH playback resolver
-- [x] Stage 4 — stream HTTP validation
-- [x] Stage 5 — standalone Flutter player
-- [x] Stage 6 — documentation
-- [x] Stage 7 — Namida reference adapter (superseded by
-      [INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md); old analysis in git
-      history at `f0fcbe4`)
-- [x] Stage 8 — account foundation: cookies, cookie store, session, current account
-- [x] Stage 9 — favorites: favlist URLs, folders, paging, add/remove, playback bridge
-- [x] Stage 9b — scan-to-login (QR) and the in-app login/favorites UI
-- [ ] Stage 10 — history
-- [ ] Stage 11 — following / subscriptions
-- [ ] Stage 12 — user playlists / collections
 
 ## License
 

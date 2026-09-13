@@ -50,9 +50,6 @@ The complete public surface is documented in one file, so there is no need to re
 the source: **[docs/INTERFACE_REFERENCE.md](https://github.com/DiWu17/namida-bilibili-provider/blob/master/docs/INTERFACE_REFERENCE.md)**
 (every type, signature, endpoint, and guarantee).
 
-`docs/INTERFACE_GAP_ANALYSIS.md` compares Namida's YouTube side with this provider
-row by row, including what is still missing.
-
 ### The exact blocker, verified against current `main`
 
 **1. Playable dispatch is hard-coded to two types** — `lib/base/audio_handler.dart`:
