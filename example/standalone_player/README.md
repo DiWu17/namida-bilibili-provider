@@ -77,16 +77,34 @@ reach GitHub release assets.
 
 Options:
 
-1. Enable a VPN/proxy and run:
+1. Enable a VPN/proxy and run the following.
 
-```powershell
-flutter clean
-$env:HTTP_PROXY = "http://127.0.0.1:7890"
-$env:HTTPS_PROXY = "http://127.0.0.1:7890"
+If you are using **cmd.exe** (the shell shown by `D:\...>`), use `set`:
+
+```bat
+set HTTP_PROXY=http://127.0.0.1:7897
+set HTTPS_PROXY=http://127.0.0.1:7897
+set http_proxy=http://127.0.0.1:7897
+set https_proxy=http://127.0.0.1:7897
+
+REM Optional: verify proxy connectivity before Flutter runs CMake.
+curl -x http://127.0.0.1:7897 -I https://github.com
+
 flutter run -d windows
 ```
 
-Use your actual proxy host/port.
+If you are using **PowerShell**, use `$env:`:
+
+```powershell
+$env:HTTP_PROXY = "http://127.0.0.1:7897"
+$env:HTTPS_PROXY = "http://127.0.0.1:7897"
+$env:http_proxy = "http://127.0.0.1:7897"
+$env:https_proxy = "http://127.0.0.1:7897"
+
+flutter run -d windows
+```
+
+Replace `7897` with your actual proxy port.
 
 2. Download these files in a browser/with a proxy:
 
