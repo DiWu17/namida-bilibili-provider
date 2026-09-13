@@ -42,3 +42,10 @@ exceptions extend the provider-neutral base so callers can catch either broad
 online-media failures or specific Bilibili failures without parsing strings.
 
 Sensitive headers (cookies, tokens, authorization) must never be logged.
+
+## Verification status
+
+- Provider core: offline fixtures + real public Bilibili metadata/DASH probes.
+- Stream validation: real HTTP 206 range checks on video and audio DASH URLs.
+- Standalone player: manually verified on Windows with `flutter run -d windows`.
+- Namida adapter: reference only; not compiled or tested against Namida.

@@ -8,12 +8,12 @@ Namida or on the private `youtipie` package. The goal is to make the Bilibili
 side complete, testable, and playable on its own so a future Namida adapter only
 has to map a small provider-neutral playback contract into Namida's player.
 
-> Current status: Stage 0-5. The provider-neutral contract, URL/metadata/DASH
-> resolution, stream range validation, and a standalone Flutter example are
-> implemented. The example includes metadata/part/quality selectors and a
-> dual media_kit video+audio player for Bilibili DASH. Real public Bilibili
-> metadata, DASH streams, and HTTP 206 range validation were verified. Manual
-> GUI playback still needs to be run in a normal Flutter environment.
+> Current status: Stage 0-6. The provider-neutral contract, URL/metadata/DASH
+> resolution, stream range validation, and standalone Flutter playback are
+> implemented. The standalone demo was manually verified on Windows with the
+> public test video: metadata loaded, video and audio DASH streams played, and
+> play/pause/seek worked. Documentation is finalized. Stage 7 (optional Namida
+> reference patch) remains optional.
 
 ## Problem
 
@@ -135,6 +135,8 @@ flutter run -d windows
 ```
 
 The included Windows runner proves the app is a real Flutter application.
+
+Manual verification on Windows: `flutter run -d windows` built successfully, PLAY displayed real video, and audio played without errors.
 For Android/iOS/Linux/macOS/web, generate the missing platform folders once:
 
 ```text
@@ -157,7 +159,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - No login/QR/cookie extraction.
 - No paid, DRM, region-locked, or member-only bypass.
 - No live, bangumi, comments, danmaku, search, or recommendations in the MVP.
-- The standalone Flutter example is implemented, but GUI playback must be run manually with `flutter run` in a supported desktop/mobile environment.
+- Standalone playback is manually verified on Windows; other platform folders are not included/verified by default.
 - The first Windows media_kit build downloads libmpv/ANGLE from GitHub release assets; restricted networks may need the offline workaround in `example/standalone_player/README.md`.
 
 ## Development stages
@@ -168,7 +170,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - [x] Stage 3  DASH playback resolver
 - [x] Stage 4  stream HTTP validation
 - [x] Stage 5  standalone Flutter player
-- [ ] Stage 6  complete documentation
+- [x] Stage 6  complete documentation
 - [ ] Stage 7  optional untested Namida reference adapter
 
 

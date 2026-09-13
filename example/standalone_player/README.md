@@ -3,6 +3,20 @@
 This Flutter app is the Stage 5 proof that the provider can resolve and play
 real public Bilibili DASH streams without Namida or YoutiPie.
 
+## Verification status
+
+Manually verified on Windows:
+
+```text
+flutter run -d windows
+-> build succeeded
+-> resolve succeeded
+-> metadata displayed
+-> PLAY displayed real video
+-> audio played
+-> pause/seek worked
+```
+
 ## What it does
 
 ```text
@@ -51,7 +65,6 @@ flutter create --platforms=android,ios,linux,macos,web .
 ```
 
 Then run `flutter run` for the desired device.
-
 
 ## Windows media_kit download troubleshooting
 

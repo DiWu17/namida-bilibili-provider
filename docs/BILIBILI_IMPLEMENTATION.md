@@ -214,11 +214,12 @@ Included:
 - real video widget plus play/pause/seek controls;
 - generated Windows runner files.
 
-The Flutter GUI itself must be launched manually in a normal Flutter desktop or
-mobile environment:
+The Flutter GUI was manually verified on Windows: `flutter run -d windows`
+built successfully and PLAY displayed/played real video and audio DASH streams. In a normal Flutter environment:
 
 ```powershell
 cd example/standalone_player
-dart pub get
+flutter pub get
 flutter run -d windows
 ```
+

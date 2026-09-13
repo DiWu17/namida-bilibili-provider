@@ -22,3 +22,11 @@
   `Range`; this is recorded as `rangeSupported = false`.
 - HTTP 416 / 501 causes one retry without `Range`, still limited by `maxBytes`.
 - Validation results do not expose full stream URLs or sensitive query strings.
+
+## Platform verification
+
+- Standalone playback was manually verified on Windows.
+- Android/iOS/macOS/Linux/web platform folders and playback are not included by
+  default and have not been verified.
+- Windows requires the media_kit libmpv/ANGLE archives; restricted networks may
+  need the offline workaround documented in `example/standalone_player/README.md`.

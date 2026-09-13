@@ -3,7 +3,7 @@
 ## Status statement
 
 - Bilibili provider: implemented and tested by this project (as stages complete).
-- Standalone playback: implemented by this project (Stage 5).
+- Standalone playback: implemented and manually verified on Windows (Stage 5).
 - Namida adapter: reference integration only, not compiled or tested here.
 
 This is because the current public Namida build depends on private packages,
@@ -60,3 +60,4 @@ This project does not modify Namida as its primary implementation and does not
 claim that Namida integration is tested. See
 [NAMIDA_REFERENCE_ADAPTER.md](NAMIDA_REFERENCE_ADAPTER.md) for untested
 reference code and exact conceptual mapping.
+
