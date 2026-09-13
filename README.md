@@ -2,8 +2,7 @@
 
 # namida-bilibili-provider
 
-**Bilibili playback and personal-data APIs as a standalone Dart package.**<br>
-No Namida dependency. No `youtipie`. No DRM, paid, or region-lock shortcuts.
+**Bilibili playback and personal-data APIs as a standalone Dart package.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Dart 3](https://img.shields.io/badge/dart-3.x-0175C2.svg)](https://dart.dev)
