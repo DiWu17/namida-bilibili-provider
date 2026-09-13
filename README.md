@@ -244,10 +244,21 @@ stream types come from the private `youtipie` package. A third-party provider
 therefore has nothing to plug into, which is why this project ships the Bilibili
 side only and makes no claim about a working adapter.
 
-[NAMIDA_UPSTREAM_ISSUE.md](docs/NAMIDA_UPSTREAM_ISSUE.md) describes the one dispatch
-gap and the smallest hook that would close it, including a verified detail: the
-player can already pass per-stream headers to `AudioVideoSource.uri(...)`, but the
-DASH builder in between does not forward them.
+Two details from reading Namida's public source, in case they are useful:
+
+- a new `Playable` type falls through `PlayableExecuter.execute()` /
+  `executeAsync()` and resolves to `null`, because both only branch on `Selectable`
+  and `YoutubeID`;
+- the player can already pass per-stream headers
+  (`AudioVideoSource.uri(url, headers: ...)`), but `_buildAVSource` neither accepts
+  nor forwards `headers`, so the DASH/lock-caching path always passes `null`.
+  Bilibili CDN URLs need `Referer` and `User-Agent`, so without one more parameter
+  on that path the result is "metadata resolves, playback 403s".
+
+The account layer was written to the same shape as Namida's YouTube side
+(`signInWithQrCode(onProgress:)` beside `YoutiAccountManager.signIn(onProgress:)`,
+`signedInAccounts` / `activeAccountKey` / `switchAccount` / `setAnonymous` /
+`activeAccountDetails` / cookie validity), so an adapter stays thin.
 
 ## License
 

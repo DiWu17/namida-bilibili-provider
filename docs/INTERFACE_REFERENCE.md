@@ -680,5 +680,3 @@ example/standalone_player/                   real Flutter app: playback + login 
 Related:
 
 - [../README.md](../README.md) — introduction, quick start, testing, limits
-- [NAMIDA_UPSTREAM_ISSUE.md](NAMIDA_UPSTREAM_ISSUE.md) — draft feature request for
-  a pluggable-provider hook, if you are integrating this into a player
