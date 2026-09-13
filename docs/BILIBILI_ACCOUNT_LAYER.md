@@ -499,10 +499,14 @@ dart test
 ### Manual authenticated verification
 
 Authenticated behaviour is verified with your own account, driven by environment
-variables. Nothing is committed, and no test runs without credentials: the file is
-tagged `online` + `authenticated` (both skipped by `dart_test.yaml`) and every
-group self-skips when its variables are missing, so `--run-skipped` alone cannot
-reach the network.
+variables. Nothing is committed, and no test runs without credentials:
+
+- the file is tagged `online` + `authenticated`, and `dart_test.yaml` skips both
+  tags, so a plain `dart test` never touches it;
+- because `--run-skipped` overrides a declared skip, every test also self-skips at
+  runtime when its variables are missing. Running the suite without credentials
+  therefore reports skips with a reason instead of failing or reaching an
+  authenticated endpoint.
 
 The QR flow itself is verified separately in two ways: an offline suite drives the
 whole state machine with fixtures, and a credential-free online test issues a real
