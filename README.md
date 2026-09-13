@@ -9,7 +9,11 @@
 [![Offline tests](https://img.shields.io/badge/offline%20tests-231-brightgreen.svg)](#testing)
 [![Platform](https://img.shields.io/badge/verified-Windows%20desktop-0078D6.svg)](#the-demo-app)
 
-[Playback](#play-a-public-video) · [Account](#scan-to-log-in) · [Demo app](#the-demo-app) · [Testing](#testing) · [Docs](#documentation) · [Status](#status)
+[Playback](#play-a-public-video) · [Account](#scan-to-log-in) · [Demo app](#the-demo-app) · [Testing](#testing) · [Docs](#documentation)
+
+With thanks to [Namida](https://github.com/namidaco/namida) and its contributor
+[MSOB7YY](https://github.com/MSOB7YY) — this provider is written to plug into their
+player, and its interface design comes from reading their public source.
 
 </div>
 
