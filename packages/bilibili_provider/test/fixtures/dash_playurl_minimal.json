@@ -1,0 +1,17 @@
+﻿{
+  "code": 0,
+  "message": "0",
+  "data": {
+    "timelength": "90000",
+    "dash": {
+      "duration": "90",
+      "video": [
+        {
+          "id": 32,
+          "base_url": "https://upos-sz-mirror.example.com/bfs/archive/minimal-video.m4s",
+          "codecs": "avc1.4d401f"
+        }
+      ]
+    }
+  }
+}

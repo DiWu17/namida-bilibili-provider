@@ -1,0 +1,22 @@
+﻿{
+  "code": 0,
+  "message": "0",
+  "data": {
+    "quality": 32,
+    "format": "mp4",
+    "timelength": 100000,
+    "accept_quality": [32],
+    "accept_description": ["480P 清晰"],
+    "durl": [
+      {
+        "order": 1,
+        "length": 100000,
+        "size": 5120000,
+        "url": "https://upos-sz-mirror.example.com/bfs/archive/muxed-fallback.mp4?deadline=1893456000",
+        "backup_url": [
+          "https://upos-sz-mirror02.example.com/bfs/archive/muxed-fallback-backup.mp4?deadline=1893456000"
+        ]
+      }
+    ]
+  }
+}

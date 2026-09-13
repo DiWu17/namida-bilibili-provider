@@ -77,3 +77,62 @@ Implementation details:
   Bilibili hosts.
 - `BilibiliClient` accepts an injected `http.Client`, which keeps client and
   provider tests fully offline via `MockClient`.
+
+## Stage 3 implementation status
+
+Stage 3 implements DASH playback resolution:
+
+```text
+BVID + CID
+ -> BilibiliClient.getPlayback
+ -> GET /x/player/playurl
+    bvid=...&cid=...&qn=...&fnval=4048&fnver=0&fourk=1&platform=pc&otype=json
+ -> BilibiliDashParser
+ -> BilibiliDashVideoStream / BilibiliDashAudioStream / BilibiliMuxedStream
+ -> OnlineVideoStream / OnlineAudioStream / OnlineMuxedStream
+ -> OnlinePlaybackData
+```
+
+Implemented:
+
+- separate DASH video/audio stream parsing;
+- optional `durl` muxed fallback parsing;
+- raw codec strings and `OnlineCodecFamily` mapping;
+- quality IDs and quality labels from API fields plus fallback labels;
+- width, height, FPS (`parseFrameRate`, including `30000/1001`), bitrate;
+- primary URL and `backupUrl` preservation;
+- per-stream headers, including explicit auth cookies when provided;
+- URL expiry inference from a URL `deadline` / `expires` / `expire` parameter;
+- `OnlinePlaybackData.expiresAt` as the earliest known stream expiry;
+- `getPlayback` re-fetches stream URLs through the API each time.
+
+### Manual real-video probe
+
+During Stage 3 development the provider was manually run against this public
+video:
+
+```text
+https://www.bilibili.com/video/BV17xeRz9EJs/
+```
+
+Observed result:
+
+```text
+canHandle        = true
+metadata         = resolved
+parts            = 1
+video DASH       = 6 streams
+audio DASH       = 3 streams
+muxed fallback   = 0
+per-stream headers and backup URLs were preserved
+```
+
+The favorites URL shape:
+
+```text
+https://space.bilibili.com/404380192/favlist?fid=...&ftype=create
+```
+
+is intentionally not supported by the ordinary-video MVP and returns
+`canHandle == false`. Favorites require user-context APIs and are outside the
+current scope.

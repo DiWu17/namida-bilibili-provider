@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../auth/bilibili_auth.dart';
 import '../errors/bilibili_exception.dart';
 import '../models/bilibili_api_models.dart';
+import '../parser/bilibili_dash_parser.dart';
 import '../parser/bilibili_metadata_parser.dart';
 import '../parser/bilibili_url_parser.dart';
 
@@ -18,12 +19,14 @@ class BilibiliClient {
   BilibiliClient({
     this.auth = const AnonymousBilibiliAuthProvider(),
     BilibiliMetadataParser? metadataParser,
+    BilibiliDashParser? playbackParser,
     BilibiliUrlParser? urlParser,
     http.Client? httpClient,
     this.debug = false,
     this.requestTimeout = const Duration(seconds: 15),
     this.maxShortLinkRedirects = 5,
   }) : _metadataParser = metadataParser ?? const BilibiliMetadataParser(),
+       _playbackParser = playbackParser ?? const BilibiliDashParser(),
        _urlParser = urlParser ?? const BilibiliUrlParser(),
        _httpClient = httpClient ?? http.Client(),
        assert(maxShortLinkRedirects > 0);
@@ -34,6 +37,7 @@ class BilibiliClient {
   final int maxShortLinkRedirects;
 
   final BilibiliMetadataParser _metadataParser;
+  final BilibiliDashParser _playbackParser;
   final BilibiliUrlParser _urlParser;
   final http.Client _httpClient;
 
@@ -69,12 +73,42 @@ class BilibiliClient {
   }
 
   /// Fetches the DASH playback response for a BVID and CID.
+  ///
+  /// [qn] is an optional Bilibili quality preference. DASH responses normally
+  /// contain multiple qualities, so callers should still expose all returned
+  /// streams to the user.
   Future<BilibiliPlaybackResponse> getPlayback({
     required String bvid,
     required String cid,
-  }) {
-    throw const BilibiliUnsupportedContentException(
-      'BilibiliClient.getPlayback is implemented in Stage 3.',
+    int? qn,
+  }) async {
+    if (!_bvidPattern.hasMatch(bvid)) {
+      throw const BilibiliParseException('Playback requires a valid BVID.');
+    }
+
+    final parsedCid = int.tryParse(cid);
+    if (parsedCid == null || parsedCid <= 0) {
+      throw const BilibiliParseException(
+        'Playback requires a positive numeric CID.',
+      );
+    }
+
+    final query = <String, String>{
+      'bvid': bvid,
+      'cid': parsedCid.toString(),
+      'qn': (qn ?? 127).toString(),
+      'fnval': '4048',
+      'fnver': '0',
+      'fourk': '1',
+      'platform': 'pc',
+      'otype': 'json',
+    };
+
+    final uri = Uri.https('api.bilibili.com', '/x/player/playurl', query);
+    final body = await _getString(uri);
+    return _playbackParser.parsePlaybackResponse(
+      body,
+      headers: _requestHeaders(),
     );
   }
 

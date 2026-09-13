@@ -3,6 +3,8 @@ import 'package:online_media_provider/online_media_provider.dart';
 import 'auth/bilibili_auth.dart';
 import 'client/bilibili_client.dart';
 import 'errors/bilibili_exception.dart';
+import 'models/bilibili_api_models.dart';
+import 'parser/bilibili_dash_parser.dart';
 import 'parser/bilibili_metadata_parser.dart';
 import 'parser/bilibili_url_parser.dart';
 
@@ -15,6 +17,7 @@ class BilibiliProvider implements OnlineMediaProvider {
     BilibiliClient? client,
     BilibiliUrlParser? urlParser,
     BilibiliMetadataParser? metadataParser,
+    BilibiliDashParser? playbackParser,
     BilibiliAuthProvider? auth,
     bool debug = false,
   }) : _client =
@@ -25,6 +28,7 @@ class BilibiliProvider implements OnlineMediaProvider {
            ),
        _urlParser = urlParser ?? const BilibiliUrlParser(),
        _metadataParser = metadataParser ?? const BilibiliMetadataParser(),
+       _playbackParser = playbackParser ?? const BilibiliDashParser(),
        debug = debug;
 
   /// Explicit anonymous constructor mirroring the public provider contract.
@@ -32,11 +36,13 @@ class BilibiliProvider implements OnlineMediaProvider {
     BilibiliClient? client,
     BilibiliUrlParser? urlParser,
     BilibiliMetadataParser? metadataParser,
+    BilibiliDashParser? playbackParser,
     bool debug = false,
   }) : this(
          client: client,
          urlParser: urlParser,
          metadataParser: metadataParser,
+         playbackParser: playbackParser,
          auth: const AnonymousBilibiliAuthProvider(),
          debug: debug,
        );
@@ -44,6 +50,9 @@ class BilibiliProvider implements OnlineMediaProvider {
   final BilibiliClient _client;
   final BilibiliUrlParser _urlParser;
   final BilibiliMetadataParser _metadataParser;
+  final BilibiliDashParser _playbackParser;
+  final Map<String, BilibiliVideoInfo> _videoInfoCache =
+      <String, BilibiliVideoInfo>{};
 
   /// Enables debug logging in future stages. It must never log credentials.
   final bool debug;
@@ -85,6 +94,8 @@ class BilibiliProvider implements OnlineMediaProvider {
     }
 
     final info = await _client.getVideoInfo(id: ref.platformVideoId);
+    _videoInfoCache[info.bvid] = info;
+
     final selectedPage =
         ref.page ??
         (preferredPartIndex == null ? null : preferredPartIndex + 1);
@@ -96,9 +107,72 @@ class BilibiliProvider implements OnlineMediaProvider {
   Future<OnlinePlaybackData> getPlayback(
     OnlineMediaId mediaId, {
     OnlinePlaybackOptions options = const OnlinePlaybackOptions(),
-  }) {
-    throw const BilibiliUnsupportedContentException(
-      'Bilibili DASH playback resolution is implemented in Stage 3.',
+  }) async {
+    if (mediaId.provider != providerId) {
+      throw BilibiliUnsupportedContentException(
+        'BilibiliProvider cannot resolve media for provider '
+        '"${mediaId.provider}".',
+      );
+    }
+
+    final cid = mediaId.subId?.trim();
+    if (cid == null || cid.isEmpty) {
+      throw const BilibiliNotFoundException(
+        'No Bilibili CID was selected for playback.',
+      );
+    }
+
+    final info =
+        _videoInfoCache[mediaId.id] ??
+        await _client.getVideoInfo(id: mediaId.id);
+    _videoInfoCache[info.bvid] = info;
+
+    final selectedPage = _pageForCid(info, cid);
+    if (selectedPage == null) {
+      throw BilibiliNotFoundException(
+        'Bilibili CID $cid does not belong to video ${info.bvid}.',
+      );
+    }
+
+    final media = _metadataParser.toOnlineMedia(
+      info,
+      selectedPage: selectedPage,
     );
+    final response = await _client.getPlayback(
+      bvid: info.bvid,
+      cid: cid,
+      qn: options.preferredVideoQualityId,
+    );
+
+    if (!response.hasStreams) {
+      throw const BilibiliUnsupportedContentException(
+        'Bilibili returned no playable DASH or muxed streams.',
+      );
+    }
+
+    if (response.videoStreams.isEmpty &&
+        response.audioStreams.isEmpty &&
+        response.muxedStreams.isNotEmpty &&
+        !options.allowMuxedFallback) {
+      throw const BilibiliUnsupportedContentException(
+        'Bilibili returned only muxed streams. '
+        'Set allowMuxedFallback=true to consume them.',
+      );
+    }
+
+    return _playbackParser.toOnlinePlaybackData(
+      response,
+      media,
+      options: options,
+    );
+  }
+
+  int? _pageForCid(BilibiliVideoInfo info, String cid) {
+    for (final part in info.parts) {
+      if (part.cid == cid) {
+        return part.page;
+      }
+    }
+    return null;
   }
 }

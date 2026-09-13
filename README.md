@@ -8,11 +8,11 @@ Namida or on the private `youtipie` package. The goal is to make the Bilibili
 side complete, testable, and playable on its own so a future Namida adapter only
 has to map a small provider-neutral playback contract into Namida's player.
 
-> Current status: Stage 0-2. The provider-neutral contract, repository
-> bootstrap, BV/av/b23 URL parser, short-link safety limits, metadata mapping,
-> fixtures, and offline tests are in place. DASH resolution, real stream
-> validation, and the standalone Flutter player are implemented in later
-> stages.
+> Current status: Stage 0-3. The provider-neutral contract, BV/av/b23 URL
+> parser, bounded short-link resolution, metadata/CID mapping, DASH
+> audio/video parsing, and offline tests are in place. A real public Bilibili
+> video was manually resolved and its DASH streams were returned successfully.
+> Stream range validation and the standalone Flutter player remain.
 
 ## Problem
 
@@ -101,8 +101,8 @@ The parser and metadata stage handle all of these, including bounded redirects f
 ## Test status
 
 Offline tests are required to pass without network access. The current suite
-contains 39 offline tests: 7 provider-neutral model tests and 32 Bilibili
-URL/client/metadata-resolve tests. Online integration tests are tagged and run
+contains 54 offline tests: 7 provider-neutral model tests and 47 Bilibili
+URL/client/metadata/DASH-resolve tests. Online integration tests are tagged and run
 only through the scheduled/manual workflow.
 
 Run locally:
@@ -140,19 +140,19 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - No login/QR/cookie extraction.
 - No paid, DRM, region-locked, or member-only bypass.
 - No live, bangumi, comments, danmaku, search, or recommendations in the MVP.
-- Short-link redirect resolution, metadata, DASH resolution, stream validation,
-  and the Flutter demo are later stages.
+- Stream range validation and the standalone Flutter demo are later stages.
 
 ## Development stages
 
 - [x] Stage 0  repository bootstrap, provider-neutral DTOs/contract, tests, CI
 - [x] Stage 1  BV/av/b23 URL parser and part parameter
 - [x] Stage 2  metadata, uploader, cover, duration, parts, CID resolution
-- [ ] Stage 3  DASH playback resolver
+- [x] Stage 3  DASH playback resolver
 - [ ] Stage 4  stream HTTP validation
 - [ ] Stage 5  standalone Flutter player
 - [ ] Stage 6  complete documentation
 - [ ] Stage 7  optional untested Namida reference adapter
+
 
 
 
