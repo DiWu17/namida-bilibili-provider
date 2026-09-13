@@ -46,8 +46,11 @@ packages/
   bilibili_provider/         Bilibili implementation: URL/API/DASH, account layer, parsers
 example/
   standalone_player/         real Flutter app: playback + login + favorites browser
-integration_test/            reserved for end-to-end tests
 ```
+
+Online tests live inside the provider package
+(`packages/bilibili_provider/test/online/`) and are excluded from the default
+offline run by tags.
 
 Inside `bilibili_provider`, playback and account code meet in exactly one place:
 
