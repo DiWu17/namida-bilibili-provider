@@ -17,4 +17,5 @@ jobs:
         with:
           sdk: stable
       - run: dart pub get
-      - run: dart test --tags online
+      - run: dart test --tags online --run-skipped
+

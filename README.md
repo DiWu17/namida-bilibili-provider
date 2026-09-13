@@ -8,11 +8,12 @@ Namida or on the private `youtipie` package. The goal is to make the Bilibili
 side complete, testable, and playable on its own so a future Namida adapter only
 has to map a small provider-neutral playback contract into Namida's player.
 
-> Current status: Stage 0-3. The provider-neutral contract, BV/av/b23 URL
+> Current status: Stage 0-4. The provider-neutral contract, BV/av/b23 URL
 > parser, bounded short-link resolution, metadata/CID mapping, DASH
-> audio/video parsing, and offline tests are in place. A real public Bilibili
-> video was manually resolved and its DASH streams were returned successfully.
-> Stream range validation and the standalone Flutter player remain.
+> audio/video parsing, and lightweight stream range validation are in place.
+> A real public Bilibili video was manually resolved, its DASH streams were
+> returned, and both first video and audio streams passed HTTP 206 range
+> validation. The standalone Flutter player remains.
 
 ## Problem
 
@@ -101,9 +102,11 @@ The parser and metadata stage handle all of these, including bounded redirects f
 ## Test status
 
 Offline tests are required to pass without network access. The current suite
-contains 54 offline tests: 7 provider-neutral model tests and 47 Bilibili
-URL/client/metadata/DASH-resolve tests. Online integration tests are tagged and run
-only through the scheduled/manual workflow.
+contains 60 offline tests: 7 provider-neutral model tests and 53 Bilibili
+URL/client/metadata/DASH tests. There is also 1 tagged online test that
+resolves a public video, fetches DASH streams, and validates the first
+video/audio stream with an HTTP Range request. Online tests are tagged and
+run only through the scheduled/manual workflow.
 
 Run locally:
 
@@ -140,7 +143,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - No login/QR/cookie extraction.
 - No paid, DRM, region-locked, or member-only bypass.
 - No live, bangumi, comments, danmaku, search, or recommendations in the MVP.
-- Stream range validation and the standalone Flutter demo are later stages.
+- The standalone Flutter demo and real merged video+audio playback are later stages.
 
 ## Development stages
 
@@ -148,7 +151,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - [x] Stage 1  BV/av/b23 URL parser and part parameter
 - [x] Stage 2  metadata, uploader, cover, duration, parts, CID resolution
 - [x] Stage 3  DASH playback resolver
-- [ ] Stage 4  stream HTTP validation
+- [x] Stage 4  stream HTTP validation
 - [ ] Stage 5  standalone Flutter player
 - [ ] Stage 6  complete documentation
 - [ ] Stage 7  optional untested Namida reference adapter

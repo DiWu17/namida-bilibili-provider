@@ -14,3 +14,4 @@ export 'src/parser/bilibili_dash_parser.dart';
 export 'src/parser/bilibili_frame_rate.dart';
 export 'src/parser/bilibili_metadata_parser.dart';
 export 'src/parser/bilibili_url_parser.dart';
+export 'src/validation/bilibili_stream_validator.dart';

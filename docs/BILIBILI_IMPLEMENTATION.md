@@ -136,3 +136,50 @@ https://space.bilibili.com/404380192/favlist?fid=...&ftype=create
 is intentionally not supported by the ordinary-video MVP and returns
 `canHandle == false`. Favorites require user-context APIs and are outside the
 current scope.
+
+## Stage 4 implementation status
+
+Stage 4 adds lightweight stream validation:
+
+```text
+OnlineVideoStream / OnlineAudioStream
+ -> GET stream.url
+ -> request headers from the stream
+ -> Range: bytes=0-1023
+ -> read at most maxBytes
+ -> HTTP 206 (preferred) or HTTP 200 fallback
+ -> structured BilibiliStreamValidationResult
+```
+
+Implementation:
+
+- `BilibiliStreamValidator` accepts an injected `http.Client`.
+- Each stream's own `headers` are forwarded.
+- Only the configured prefix is read and buffered.
+- HTTP 206 is recorded as `rangeSupported = true`.
+- HTTP 200 is accepted as a limited fallback and recorded as
+  `rangeSupported = false`.
+- HTTP 416 / 501 triggers one retry without the `Range` header; the retry is
+  still limited by `maxBytes`.
+- Timeouts and transport errors return a non-playable result with a safe reason.
+- Validation never logs or returns the full sensitive stream URL query.
+
+### Real validation result
+
+Using the same public video:
+
+```text
+https://www.bilibili.com/video/BV17xeRz9EJs/
+```
+
+the first parsed video and audio stream both returned:
+
+```text
+status       = 206
+bytesRead    = 1024
+rangeSupport = true
+isPlayable   = true
+```
+
+This demonstrates that the provider's resolved DASH URLs and per-stream headers
+work against real Bilibili CDN endpoints, without downloading the full media.

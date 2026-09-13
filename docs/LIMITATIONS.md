@@ -12,3 +12,13 @@
   headers through to its HTTP stack.
 - Online tests depend on public Bilibili availability and are therefore
   scheduled/manual rather than part of every commit.
+
+## Stream validation behavior
+
+- `BilibiliStreamValidator` reads only a small prefix (`maxBytes`, default
+  1024) and never downloads a complete media file.
+- HTTP 206 is treated as range support.
+- HTTP 200 is accepted as a limited fallback when a CDN ignores or rejects
+  `Range`; this is recorded as `rangeSupported = false`.
+- HTTP 416 / 501 causes one retry without `Range`, still limited by `maxBytes`.
+- Validation results do not expose full stream URLs or sensitive query strings.
