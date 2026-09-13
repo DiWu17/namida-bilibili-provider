@@ -1,0 +1,10 @@
+﻿name: online_media_provider
+description: Provider-neutral online media DTOs and contracts for playback providers such as Bilibili.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+dev_dependencies:
+  test: ^1.26.0

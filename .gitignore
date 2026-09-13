@@ -1,0 +1,24 @@
+﻿# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Local test/tool caches created by constrained environments
+.pub-cache/
+.appdata/
+.localappdata/
+.tmp/
+
+# Library lock files (this is a package repo, not an application)
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

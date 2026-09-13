@@ -1,0 +1,14 @@
+﻿name: bilibili_provider
+description: Standalone Bilibili online media provider with no Namida or YoutiPie dependency.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  online_media_provider:
+    path: ../online_media_provider
+
+dev_dependencies:
+  test: ^1.26.0
