@@ -1,138 +1,110 @@
+<div align="center">
+
 # namida-bilibili-provider
 
-A standalone Bilibili online-media provider designed for potential integration
-with [Namida](https://github.com/namidaco/namida).
+**Bilibili playback and personal-data APIs as a standalone Dart package.**<br>
+No Namida dependency. No `youtipie`. No DRM, paid, or region-lock shortcuts.
 
-**This project is not an official Namida component.** It does not depend on
-Namida or on the private `youtipie` package. The goal is to make the Bilibili
-side complete, testable, and playable on its own so a future Namida adapter only
-has to map a small provider-neutral playback contract into Namida's player.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Dart 3](https://img.shields.io/badge/dart-3.x-0175C2.svg)](https://dart.dev)
+[![Offline tests](https://img.shields.io/badge/offline%20tests-231-brightgreen.svg)](#testing)
+[![Platform](https://img.shields.io/badge/verified-Windows%20desktop-0078D6.svg)](#the-demo-app)
 
-> Current status: Stage 0-9. The Bilibili provider, provider-neutral contract,
-> standalone Flutter playback, documentation, and an untested Namida reference
-> integration analysis are complete. Stage 8-9 add a Bilibili account/personal-data
-> layer: explicit-cookie sign-in, cookie storage, current-account info, account
-> switching, and favorites (folders, paging, add/remove). The account layer is
-> integrated into the standalone app as a login dialog, a saved-cookie store and a
-> favorites browser. See [docs/BILIBILI_ACCOUNT_LAYER.md](docs/BILIBILI_ACCOUNT_LAYER.md).
+[Playback](#play-a-public-video) · [Account](#scan-to-log-in) · [Demo app](#the-demo-app) · [Testing](#testing) · [Docs](#documentation) · [Status](#status)
 
-## Problem
+</div>
 
-Namida already has YouTube playback, but its YouTube parsing/stream extraction
-is supplied by a private package (`youtipie`). This makes it impossible to
-clone, extend, build, and verify a Bilibili integration locally. A feature
-request alone would leave all Bilibili API, CID, DASH, header, and expiry work
-to the Namida maintainer.
+---
 
-## Goal
+## What is this?
 
-Implement a complete, independently testable Bilibili provider that exposes:
+This repository turns Bilibili into a first-class online source for a Dart or
+Flutter player. It implements the Bilibili side end to end — URL parsing,
+metadata, DASH stream extraction, and the signed-in user's own account data —
+behind a small provider-neutral contract, so a player only has to map
+`stream.url` + `stream.headers` into its audio and video sources.
 
-- provider-neutral metadata and parts;
-- separate DASH video and audio stream descriptions;
-- raw codec, quality, resolution, FPS, bitrate, headers, backup URLs, and
-  expiry information;
-- structured errors and an optional explicit auth boundary;
-- a standalone Flutter demo proving real playback without Namida/YoutiPie.
+It was written because Namida's YouTube support comes from a **private** package
+(`youtipie`), which makes it impossible for anyone outside the project to build,
+run, or test a Bilibili integration. So the Bilibili half is kept public,
+self-contained, and verifiable on its own: the packages do not import Namida, and
+they do not need Namida to work.
 
-The remaining Namida-side work should be only a thin adapter from
-`OnlinePlaybackData` to Namida's existing audio/video source layer.
+> **Not an official Namida component.** No integration in this repository has been
+> compiled or tested against Namida. See [Namida integration](#namida-integration).
 
-## Architecture
+|  |  |
+|---|---|
+| **Playback** | metadata, uploader, cover, duration, description · multi-part / CID resolution · DASH **video and audio as separate streams** · quality id/label, resolution, FPS, bitrate · raw codec + codec family · per-stream HTTP headers · backup URLs · expiry metadata · HTTP Range validation |
+| **Account** | scan-to-login (Bilibili's own QR flow) · cookie stores (in-memory, runtime "do not remember", plain-text file) · profile · account switching · sign-out · favorites: list, page, add, remove |
+| **Not here** | history, subscriptions, user playlists (planned) · search, feed, comments, danmaku · live, bangumi, downloads, subtitles · **no** DRM / membership / paid / region-lock bypass |
 
-```mermaid
-flowchart TD
-    URL[Bilibili URL]
-    Provider[BilibiliProvider]
-    API[Bilibili Web/API]
-    DTO[OnlinePlaybackData]
-    Demo[Standalone Player]
-    Adapter[Future Namida Adapter]
-    Namida[Namida Player]
+## Repository layout
 
-    URL --> Provider
-    Provider --> API
-    API --> Provider
-    Provider --> DTO
-    DTO --> Demo
-    DTO --> Adapter
-    Adapter --> Namida
+```text
+packages/
+  online_media_provider/     provider-neutral contract + DTOs; knows nothing about Bilibili
+  bilibili_provider/         Bilibili implementation: URL/API/DASH, account layer, parsers
+example/
+  standalone_player/         real Flutter app: playback + login + favorites browser
+integration_test/            reserved for end-to-end tests
 ```
 
-The repository is split into two packages:
-
-- `packages/online_media_provider`  provider-neutral DTOs and contracts.
-- `packages/bilibili_provider`  Bilibili URL/API/DASH implementation plus the
-  account/personal-data layer. The public provider API does not expose Bilibili
-  API JSON models.
-
-Inside `packages/bilibili_provider`, playback and account concerns stay separate:
+Inside `bilibili_provider`, playback and account code meet in exactly one place:
 
 ```mermaid
-flowchart TD
-    Provider[BilibiliProvider<br/>canHandle / resolve / getPlayback]
-    ResolveById[resolveById]
-    AccountClient[BilibiliAccountClient]
-    Manager[BilibiliAccountManager]
-    Cookies[BilibiliCookies + BilibiliCookieStore]
-    Transport[BilibiliHttpTransport]
-
-    Provider --> Transport
-    ResolveById --> Provider
-    AccountClient --> Transport
-    Manager --> AccountClient
-    Manager --> Cookies
-    Cookies --> Transport
+flowchart LR
+    URL["Bilibili URL"] --> Provider["BilibiliProvider<br/>canHandle / resolve / getPlayback"]
+    QR["QR scan or pasted cookie"] --> Manager["BilibiliAccountManager"]
+    Manager --> AccountClient["BilibiliAccountClient"]
+    Provider --> HTTP["BilibiliHttpTransport"]
+    AccountClient --> HTTP
+    HTTP --> API["Bilibili API / CDN"]
+    Provider --> DTO["OnlineMedia<br/>OnlinePlaybackData"]
+    AccountClient --> Favorites["favorites → OnlineMedia"]
+    Favorites --> DTO
+    DTO --> Demo["example/standalone_player"]
+    DTO --> Adapter["a thin player adapter"]
 ```
 
-`BilibiliHttpTransport` is the single place cookies are attached, which is also
-where credential logging is prohibited.
+`BilibiliHttpTransport` is the only place a `Cookie` header is attached — and the
+only place that is forbidden from logging one.
 
-## Five-line usage example
+## Play a public video
 
 ```dart
-final provider = BilibiliProvider();
-final media = await provider.resolve(Uri.parse('https://www.bilibili.com/video/BV...'));
+import 'package:bilibili_provider/bilibili_provider.dart';
+
+final provider = BilibiliProvider();                 // anonymous by default
+final media = await provider.resolve(
+  Uri.parse('https://www.bilibili.com/video/BV17xeRz9EJs/'),
+);
 final playback = await provider.getPlayback(media.id);
-final audio = playback.audioStreams.first; // choose with your own policy
+
+final audio = playback.audioStreams.first;           // pick your own policy
 final video = playback.videoStreams.first;
-// Pass audio.url/video.url and audio.headers/video.headers to the player.
+// Hand url + headers to your player. Both are required.
 ```
 
-## Supported URLs
+Supported inputs:
 
-MVP target:
+```text
+https://www.bilibili.com/video/BV...        https://b23.tv/...   (bounded redirects)
+https://www.bilibili.com/video/av...        ?p=N                (part selection)
+```
 
-- `https://www.bilibili.com/video/BV...`
-- `https://www.bilibili.com/video/av...`
-- `https://b23.tv/...`
-- `?p=N` part selection
+The provider never fakes a single muxed URL for DASH content, and `getPlayback`
+may be called again at any time to refresh expired CDN URLs.
 
-The parser and metadata stage handle all of these, including bounded redirects for b23.tv short links.
+## Scan to log in
 
-## Supported playback features (MVP target)
-
-- metadata: title, UP name, cover, duration, description;
-- multi-part/P selection and CID resolution;
-- DASH separate audio/video streams;
-- quality id/label, resolution, FPS parsing;
-- raw codec plus coarse codec family;
-- required per-stream HTTP headers;
-- backup URL lists;
-- URL expiry metadata and stream refresh through `getPlayback`;
-- stream HTTP range validation;
-- real playback in the standalone Flutter example.
-
-## Account and personal data
-
-Sign-in is Bilibili's own scan-to-login flow: the user scans a QR with the
-Bilibili app and confirms on their own device. No password, captcha, or browser
-profile is involved.
+Sign-in uses Bilibili's own web QR flow: the user scans with the Bilibili app and
+confirms on their own device. There is no password, no captcha, and no browser
+profile involved.
 
 ```dart
-final manager = BilibiliAccountManager();
+final manager = BilibiliAccountManager();            // anonymous until sign-in
 
-// Scan to log in. onProgress also carries the QR content to render.
 final session = await manager.signInWithQrCode(
   onProgress: (status) => renderQr(status.login?.uri, status.stage),
   pollInterval: const Duration(seconds: 2),
@@ -140,21 +112,19 @@ final session = await manager.signInWithQrCode(
   isCancelled: () => dialogClosed,
 );
 
-// Fallback for environments where scanning is impossible.
-await manager.signInWithCookies(BilibiliCookies.fromUserInput(pastedHeader));
-
 final account = await manager.getCurrentAccount();   // mid / name / avatar
-final client = manager.client;
-final folders = await client.getCreatedFavoriteFolders(mid: account!.mid);
-final favorites = await client.getAllFavoriteMedia(mediaId: folders.first.mediaId);
+final folders = await manager.client.getCreatedFavoriteFolders(mid: account!.mid);
 
-// Favorites carry a BVID but no CID, so resolve the part before playback.
-final provider = manager.createMediaProvider();
-final resolved = await provider.resolveById(favorites.first.id);
-final playback = await provider.getPlayback(resolved.id);
+// Favorites carry a BVID but no CID, so fill the part in before playback.
+final favorites = await manager.getAllFavoriteMedia(mediaId: folders.first.mediaId);
+final resolved  = await manager.createMediaProvider().resolveById(favorites.first.id);
 ```
 
-To keep a login on disk (desktop/server only), opt into the `dart:io` entry point:
+`BilibiliQrLoginStage` reports `pending → scanned → confirmed`, plus `expired` and
+`failed`; the delivered session is validated through `nav` before it is adopted,
+exactly like a pasted cookie. A manual cookie paste is available as a fallback.
+
+To keep a login on disk (desktop/server only, plain text, opt-in):
 
 ```dart
 import 'package:bilibili_provider/bilibili_provider.dart';
@@ -165,148 +135,117 @@ final store = ConditionalBilibiliCookieStore(
 );
 final manager = BilibiliAccountManager(cookieStore: store);
 await manager.restore();
-store.persist = rememberMe;             // "do not remember" drops all writes
+store.persist = rememberMe;             // false drops every write
 ```
 
-Security properties of the layer:
+The main library contains no `dart:io`, so merely importing the provider can never
+write a credential to disk.
 
-- anonymous by default; credentials only from an explicit scan-to-login or the
-  user's own pasted cookie, never from a browser profile;
-- QR tickets are single-use and redacted in `toString()`; they are never logged;
-- cookies are validated against `nav` before being adopted, so a rejected jar
-  never replaces a working session;
-- `toString()` on every cookie-carrying type is redacted, and exception messages
-  never contain cookie or csrf values (asserted by tests);
-- debug logging is off by default and, when enabled, emits only
-  `METHOD host/path -> status`;
-- the main library contains no `dart:io`, so importing the provider cannot write
-  credentials; the opt-in file store keeps plain text and says so;
-- no DRM, membership, paid, or region-lock handling.
+## The demo app
 
-See [docs/BILIBILI_ACCOUNT_LAYER.md](docs/BILIBILI_ACCOUNT_LAYER.md) for the full
-API, endpoint list, fixtures, and the Namida/YoutiPie mapping table.
-
-## In-app login and favorites
-
-`example/standalone_player` now covers the account layer, not just playback:
+`example/standalone_player` is a real Flutter app that exercises the whole stack:
+URL playback, scan-to-login, saved sessions, and a favorites browser.
 
 ```powershell
 cd example/standalone_player
+flutter pub get
 flutter run -d windows
 ```
 
-- account card at the top: anonymous / signed-in state, avatar, mid, validity,
-  refresh, switch-to-anonymous, sign out, delete saved cookies;
-- login dialog: 扫码登录 (default, renders the QR with `qr_flutter`) or 手动输入
-  Cookie (fallback), plus a switch for saving the session to
-  `%APPDATA%\namida_bilibili_provider\bilibili_account_cookies.json`;
-- favorites browser at the bottom: folder list, paged items (`ps=20`), expired
-  entries hidden with a count, and tap-to-play through `resolveById()`.
+- **account card** — anonymous/signed-in state, avatar, mid, validity, refresh,
+  switch to anonymous, sign out, delete saved cookies;
+- **login dialog** — `扫码登录` (default, renders the QR with `qr_flutter`) or
+  `手动输入 Cookie` (fallback), plus a "save to this machine" switch;
+- **favorites browser** — folders, paged items (`ps=20`), expired entries hidden
+  with a count, and tap-to-play.
 
-See [example/standalone_player/README.md](example/standalone_player/README.md).
+Verified by hand on Windows: playback, scan-to-login, session persistence across
+restarts, and `flutter build windows --debug`. Other platform folders are not
+included; generate them with `flutter create --platforms=android,ios,linux,macos,web .`
 
-## Test status
+## Testing
 
-Offline tests are required to pass without network access. The current suite
-contains 206 offline tests in `bilibili_provider` (53 playback/URL/metadata/DASH
-tests plus 153 account-layer tests) and 7 provider-neutral model tests in
-`online_media_provider`. There are also tagged online tests that resolve a public
-video and validate its streams, plus a credential-free online check that
-anonymous `nav` still reports an unauthenticated session. Online tests are tagged
-and run only through the scheduled/manual workflow.
+Offline tests never touch the network — they use fixtures and an injected
+`MockClient` — so they run in CI on every push.
 
-Authenticated behaviour is verified separately and only when you supply your own
-cookies through an environment variable; nothing runs by default and nothing is
-committed:
+| Suite | Count | Notes |
+|---|---|---|
+| `bilibili_provider` offline | **231** | 53 playback/URL/metadata/DASH + 178 account layer |
+| `online_media_provider` offline | **7** | provider-neutral model behaviour |
+| tagged online | 9 | real Bilibili; **4 need no credentials** |
+| opt-in authenticated | 5 | your own account, skipped unless you provide cookies |
 
 ```powershell
+# offline, no network needed
 cd packages/bilibili_provider
+dart test
+
+# credential-free online checks (public video, anonymous nav, QR ticket)
+dart test --tags online --run-skipped
+
+# with your own account: read-only checks + manual diagnostics
 $env:BILIBILI_TEST_COOKIES = 'SESSDATA=...; bili_jct=...; DedeUserID=...'
-dart test --tags authenticated --run-skipped          # read-only checks
-dart run tool/bilibili_account_check.dart             # manual diagnostics
+dart test --tags authenticated --run-skipped
+dart run tool/bilibili_account_check.dart --folder 200000001
 ```
 
-See [docs/BILIBILI_ACCOUNT_LAYER.md](docs/BILIBILI_ACCOUNT_LAYER.md) section 6 for
-the full procedure, the opt-in favorite write round trip, and the failure table.
+The authenticated suite also has an opt-in favorite round trip that restores the
+folder to its original state. Procedure and failure table:
+[BILIBILI_ACCOUNT_LAYER.md § 6](docs/BILIBILI_ACCOUNT_LAYER.md#6-testing).
 
-Run locally:
+## Security model
 
-```powershell
-cd packages/online_media_provider
-flutter pub get
-dart test
+- anonymous by default; credentials arrive only from an explicit sign-in;
+- one choke point (`BilibiliHttpTransport`) attaches cookies, and it cannot log them;
+- debug output is off by default; when enabled it emits only `METHOD host/path -> status` — no query strings, no bodies, no headers;
+- every cookie-carrying type redacts `toString()`, and no exception message contains a cookie, csrf token, QR ticket, or stream URL (enforced by tests);
+- QR tickets are single-use and never rendered as text;
+- `dart:io` is confined to the opt-in `io.dart` entry point;
+- no DRM, membership, paid, or region-lock bypass — only what an anonymous or signed-in user may already watch.
 
-cd ../bilibili_provider
-flutter pub get
-dart test
-```
+## Documentation
 
-## Standalone demo
+| Document | What it covers |
+|---|---|
+| [INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md) | **start here** — every type, signature, endpoint, and guarantee |
+| [BILIBILI_ACCOUNT_LAYER.md](docs/BILIBILI_ACCOUNT_LAYER.md) | account layer design, sign-in flow, fixtures, YoutiPie mapping table |
+| [INTERFACE_GAP_ANALYSIS.md](docs/INTERFACE_GAP_ANALYSIS.md) | Namida/YoutiPie compared with this provider, row by row |
+| [LIMITATIONS.md](docs/LIMITATIONS.md) | what it does not do, plus verification status |
+| [NAMIDA_UPSTREAM_ISSUE.md](docs/NAMIDA_UPSTREAM_ISSUE.md) | draft feature request for a pluggable-provider hook |
+| [NEXT_SESSION_PROMPT.md](docs/NEXT_SESSION_PROMPT.md) | the next stages of work |
 
-The standalone Flutter example lives under `example/standalone_player/`.
-It uses `media_kit` (mpv-compatible) for video and a second `media_kit`
-player for audio, keeping the provider's separate DASH model intact.
+## Namida integration
 
-On Windows:
+Namida has no formal provider interface yet: playable dispatch in
+`lib/base/audio_handler.dart` recognizes only `Selectable` and `YoutubeID`, and its
+stream types come from the private `youtipie` package. A third-party provider
+therefore has nothing to plug into, which is why this project ships the Bilibili
+side only and makes no claim about a working adapter.
 
-```powershell
-cd example/standalone_player
-flutter pub get
-flutter run -d windows
-```
+[NAMIDA_UPSTREAM_ISSUE.md](docs/NAMIDA_UPSTREAM_ISSUE.md) describes the one dispatch
+gap and the smallest hook that would close it, including a verified detail: the
+player can already pass per-stream headers to `AudioVideoSource.uri(...)`, but the
+DASH builder in between does not forward them.
 
-The included Windows runner proves the app is a real Flutter application.
+## Status
 
-Manual verification on Windows: `flutter run -d windows` built successfully, PLAY displayed real video, and audio played without errors.
-For Android/iOS/Linux/macOS/web, generate the missing platform folders once:
+- [x] Stage 0 — bootstrap, provider-neutral contract, tests, CI
+- [x] Stage 1 — BV/av/b23 URL parser and part parameter
+- [x] Stage 2 — metadata, uploader, cover, duration, parts, CID resolution
+- [x] Stage 3 — DASH playback resolver
+- [x] Stage 4 — stream HTTP validation
+- [x] Stage 5 — standalone Flutter player
+- [x] Stage 6 — documentation
+- [x] Stage 7 — Namida reference adapter (superseded by
+      [INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md); old analysis in git
+      history at `f0fcbe4`)
+- [x] Stage 8 — account foundation: cookies, cookie store, session, current account
+- [x] Stage 9 — favorites: favlist URLs, folders, paging, add/remove, playback bridge
+- [x] Stage 9b — scan-to-login (QR) and the in-app login/favorites UI
+- [ ] Stage 10 — history
+- [ ] Stage 11 — following / subscriptions
+- [ ] Stage 12 — user playlists / collections
 
-```text
-flutter create --platforms=android,ios,linux,macos,web .
-```
+## License
 
-## Namida integration boundary
-
-Namida has no formal provider interface yet: its playable dispatch recognizes only
-`Selectable` and `YoutubeID`, and its stream types come from the private
-`youtipie` package. This project therefore does **not** claim a tested Namida
-integration — there is no adapter here to test.
-
-What exists instead:
-
-- [docs/INTERFACE_REFERENCE.md](docs/INTERFACE_REFERENCE.md) — the complete public
-  surface, the HTTP endpoints, and what a player adapter has to do;
-- [docs/INTERFACE_GAP_ANALYSIS.md](docs/INTERFACE_GAP_ANALYSIS.md) — the
-  Namida/YoutiPie interface compared row by row, and what is still missing;
-- [docs/NAMIDA_UPSTREAM_ISSUE.md](docs/NAMIDA_UPSTREAM_ISSUE.md) — a draft feature
-  request describing the one dispatch gap that blocks a third-party provider.
-
-## Limits
-
-See [docs/LIMITATIONS.md](docs/LIMITATIONS.md) for the single authoritative list of
-what this project does and does not do, including the plain-text cookie store
-caveat and the platform verification status.
-
-## Development stages
-
-- [x] Stage 0  repository bootstrap, provider-neutral DTOs/contract, tests, CI
-- [x] Stage 1  BV/av/b23 URL parser and part parameter
-- [x] Stage 2  metadata, uploader, cover, duration, parts, CID resolution
-- [x] Stage 3  DASH playback resolver
-- [x] Stage 4  stream HTTP validation
-- [x] Stage 5  standalone Flutter player
-- [x] Stage 6  documentation
-- [x] Stage 7  untested Namida reference adapter (replaced by
-      `docs/INTERFACE_REFERENCE.md` and the upstream issue draft; the old
-      `reference_patch/` analysis is in git history at `f0fcbe4`)
-- [x] Stage 8  account foundation: cookies, cookie store, session, current account
-- [x] Stage 9  favorites: favlist URLs, folders, paging, add/remove, playback bridge
-- [x] Stage 9b scan-to-login (QR) and the in-app login/favorites UI
-- [ ] Stage 10 history
-- [ ] Stage 11 following / subscriptions
-- [ ] Stage 12 user playlists / collections
-
-
-
-
-
-
+[MIT](LICENSE)
