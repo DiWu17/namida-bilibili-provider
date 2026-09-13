@@ -8,12 +8,11 @@ Namida or on the private `youtipie` package. The goal is to make the Bilibili
 side complete, testable, and playable on its own so a future Namida adapter only
 has to map a small provider-neutral playback contract into Namida's player.
 
-> Current status: Stage 0-6. The provider-neutral contract, URL/metadata/DASH
-> resolution, stream range validation, and standalone Flutter playback are
-> implemented. The standalone demo was manually verified on Windows with the
-> public test video: metadata loaded, video and audio DASH streams played, and
-> play/pause/seek worked. Documentation is finalized. Stage 7 (optional Namida
-> reference patch) remains optional.
+> Current status: Stage 0-7. The Bilibili provider, provider-neutral contract,
+> standalone Flutter playback, and documentation are complete. Stage 7 adds an
+> untested reference integration analysis for Namida public source. The reference
+> patch is intentionally not claimed to compile or be tested against Namida,
+> because Namida currently depends on private packages.
 
 ## Problem
 
@@ -171,7 +170,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - [x] Stage 4  stream HTTP validation
 - [x] Stage 5  standalone Flutter player
 - [x] Stage 6  complete documentation
-- [ ] Stage 7  optional untested Namida reference adapter
+- [x] Stage 7  optional untested Namida reference adapter
 
 
 

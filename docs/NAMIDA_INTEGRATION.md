@@ -61,3 +61,13 @@ claim that Namida integration is tested. See
 [NAMIDA_REFERENCE_ADAPTER.md](NAMIDA_REFERENCE_ADAPTER.md) for untested
 reference code and exact conceptual mapping.
 
+
+## Reference patch
+
+`reference_patch/` contains an untested integration analysis based on Namida
+public source commit `d3d8871`:
+
+- dispatch/integration map;
+- conceptual minimal diff;
+- reference adapter code using `OnlinePlaybackData`;
+- explicit warnings that it has not been compiled or tested against Namida.
