@@ -1,4 +1,4 @@
-﻿name: Unit Tests
+name: Unit Tests
 
 on:
   push:
@@ -21,7 +21,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: stable
+          # Pinned on purpose, not `stable`.
+          #
+          # `dart format --output=none --set-exit-if-changed .` is only
+          # reproducible when the formatter version is fixed: dart_style changes
+          # its layout decisions between Dart releases, so a new stable SDK can
+          # start reformatting files that are already committed and fail this job
+          # with no code change (that is exactly what happened with Dart 3.11.x
+          # vs a newer stable, on test/online/bilibili_account_online_test.dart).
+          #
+          # Keep this equal to the Dart SDK bundled with the Flutter version the
+          # packages are developed against. When bumping it, also run
+          # `dart format .` in both packages and commit the result.
+          sdk: 3.11.4
       - run: dart pub get
       - run: dart format --output=none --set-exit-if-changed .
       - run: dart analyze

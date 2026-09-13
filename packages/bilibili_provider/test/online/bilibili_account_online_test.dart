@@ -11,43 +11,39 @@ import 'package:test/test.dart';
 /// credentials. Tests that need a real Bilibili account are intentionally not
 /// part of the suite; supply cookies through `BilibiliAccountManager.signIn` in
 /// a local scratch test instead.
+///
+/// No explicit `timeout` is set: package:test already defaults to 30 seconds for
+/// these small requests.
 void main() {
-  test(
-    'nav without cookies reports an unauthenticated session',
-    () async {
-      final client = BilibiliAccountClient();
+  test('nav without cookies reports an unauthenticated session', () async {
+    final client = BilibiliAccountClient();
 
-      final nav = await client.getNav();
+    final nav = await client.getNav();
 
-      expect(nav.isLogin, isFalse);
-      expect(nav.account, isNull);
-      expect(nav.validity.isAuthenticated, isFalse);
-      expect(
-        nav.validity.requiresSignIn,
-        isFalse,
-        reason: 'anonymous access is not an expired session',
-      );
-    },
-    timeout: const Timeout(Duration(seconds: 30)),
-  );
+    expect(nav.isLogin, isFalse);
+    expect(nav.account, isNull);
+    expect(nav.validity.isAuthenticated, isFalse);
+    expect(
+      nav.validity.requiresSignIn,
+      isFalse,
+      reason: 'anonymous access is not an expired session',
+    );
+  });
 
-  test(
-    'account manager stays anonymous and sends no cookies',
-    () async {
-      final manager = BilibiliAccountManager();
-      addTearDown(manager.dispose);
+  test('account manager stays anonymous and sends no cookies', () async {
+    final manager = BilibiliAccountManager();
+    addTearDown(manager.dispose);
 
-      expect(manager.isAnonymous, isTrue);
-      expect(manager.authProvider.cookieHeader, isNull);
+    expect(manager.isAnonymous, isTrue);
+    expect(manager.authProvider.cookieHeader, isNull);
 
-      final validity = await manager.validateActiveCookies();
+    final validity = await manager.validateActiveCookies();
 
-      expect(validity.isAnonymous, isTrue);
-      expect(manager.signedInAccounts, isEmpty);
-      expect(manager.activeAccountDetails, isNull);
-    },
-    timeout: const Timeout(Duration(seconds: 30)),
-  );
+    expect(validity.isAnonymous, isTrue);
+    expect(manager.signedInAccounts, isEmpty);
+    expect(manager.activeAccountDetails, isNull);
+  });
+
   test(
     'QR login issues a scannable ticket and reports it as pending',
     () async {
@@ -76,6 +72,5 @@ void main() {
       expect(status.stage, BilibiliQrLoginStage.pending);
       expect(status.cookies, isNull);
     },
-    timeout: const Timeout(Duration(seconds: 30)),
   );
 }
