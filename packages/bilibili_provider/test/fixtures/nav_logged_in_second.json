@@ -1,0 +1,26 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "isLogin": true,
+    "face": "http://i0.hdslb.com/bfs/face/example-account-two.jpg",
+    "level_info": {
+      "current_level": 6,
+      "current_min": 0,
+      "current_exp": 0,
+      "next_exp": 0
+    },
+    "mid": 100000002,
+    "money": 0,
+    "moral": 70,
+    "uname": "Second Account",
+    "vipStatus": 0,
+    "vipType": 0,
+    "vip": {
+      "type": 0,
+      "status": 0
+    },
+    "coins_num": 0
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "id": 200000001,
+    "fid": 200000001,
+    "mid": 100000001,
+    "attr": 0,
+    "title": "Default favorites",
+    "cover": "//i0.hdslb.com/bfs/archive/example-folder-cover.jpg",
+    "media_count": 3,
+    "intro": "Folder used by offline fixtures."
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "count": 3,
+    "list": [
+      {
+        "id": 200000001,
+        "fid": 200000001,
+        "mid": 100000001,
+        "attr": 0,
+        "title": "Default favorites",
+        "fav_state": 0,
+        "media_count": 3
+      },
+      {
+        "id": 200000002,
+        "fid": 200000002,
+        "mid": 100000001,
+        "attr": 0,
+        "title": "Second folder",
+        "fav_state": 0,
+        "media_count": 1
+      },
+      {
+        "id": 200000003,
+        "fid": 200000003,
+        "mid": 100000001,
+        "attr": 1,
+        "title": "Private folder",
+        "fav_state": 0,
+        "media_count": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "info": {
+      "id": 200000001,
+      "fid": 200000001,
+      "mid": 100000001,
+      "attr": 0,
+      "title": "Default favorites",
+      "media_count": 3
+    },
+    "medias": [
+      {
+        "id": 170004,
+        "type": 2,
+        "title": "Page Two Fixture Entry",
+        "cover": "http://i0.hdslb.com/bfs/archive/example-page-two.jpg",
+        "intro": "Only present on the second page.",
+        "page": 1,
+        "duration": 75,
+        "upper": {
+          "mid": 123458,
+          "name": "Third UP",
+          "face": "http://i0.hdslb.com/bfs/face/example-up-3.jpg"
+        },
+        "bvid": "BV1zz411c7mF",
+        "pubtime": 1700002000,
+        "fav_time": 1710003000,
+        "attr": 0
+      }
+    ],
+    "has_more": false,
+    "ttl": 1
+  }
+}

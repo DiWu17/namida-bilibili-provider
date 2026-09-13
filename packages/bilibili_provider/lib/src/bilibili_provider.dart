@@ -167,6 +167,46 @@ class BilibiliProvider implements OnlineMediaProvider {
     );
   }
 
+  /// Resolves full metadata and parts for an [OnlineMediaId] this provider
+  /// already knows about.
+  ///
+  /// Favorite folders, history and user playlists only expose a main id (BVID)
+  /// with no CID, so those items cannot be played from `getPlayback` directly.
+  /// This fills in the parts (and therefore `subId`) with one metadata request,
+  /// after which the returned `media.id` can be passed to [getPlayback].
+  ///
+  /// When [mediaId] already carries a `subId`, that CID selects the part;
+  /// otherwise [OnlineMediaResolveOptions.preferredPartIndex] applies and the
+  /// first part is the fallback.
+  Future<OnlineMedia> resolveById(
+    OnlineMediaId mediaId, {
+    OnlineMediaResolveOptions options = const OnlineMediaResolveOptions(),
+  }) async {
+    if (mediaId.provider != providerId) {
+      throw BilibiliUnsupportedContentException(
+        'BilibiliProvider cannot resolve media for provider '
+        '"${mediaId.provider}".',
+      );
+    }
+
+    final preferredPartIndex = options.preferredPartIndex;
+    if (preferredPartIndex != null && preferredPartIndex < 0) {
+      throw const BilibiliParseException(
+        'preferredPartIndex must not be negative.',
+      );
+    }
+
+    final info = await _client.getVideoInfo(id: mediaId.id);
+    _videoInfoCache[info.bvid] = info;
+
+    final subId = mediaId.subId;
+    final selectedPage =
+        (subId == null ? null : _pageForCid(info, subId)) ??
+        (preferredPartIndex == null ? null : preferredPartIndex + 1);
+
+    return _metadataParser.toOnlineMedia(info, selectedPage: selectedPage);
+  }
+
   int? _pageForCid(BilibiliVideoInfo info, String cid) {
     for (final part in info.parts) {
       if (part.cid == cid) {

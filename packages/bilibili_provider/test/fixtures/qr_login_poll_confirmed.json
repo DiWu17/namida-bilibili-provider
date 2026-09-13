@@ -1,0 +1,12 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "url": "https://passport.biligame.com/crossDomain?DedeUserID=100000001&DedeUserID__ckMd5=fixture-check-md5&Expires=1800000000&SESSDATA=fixture-sessdata-secret-9f3a&bili_jct=fixture-csrf-secret-4c1b&gourl=https%3A%2F%2Fwww.bilibili.com",
+    "refresh_token": "fixture-refresh-token-77aa",
+    "timestamp": 1710000000,
+    "code": 0,
+    "message": ""
+  }
+}

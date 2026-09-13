@@ -1,0 +1,38 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "isLogin": true,
+    "email_verified": 0,
+    "face": "http://i0.hdslb.com/bfs/face/example-account.jpg",
+    "level_info": {
+      "current_level": 4,
+      "current_min": 0,
+      "current_exp": 0,
+      "next_exp": 0
+    },
+    "mid": 100000001,
+    "mobile_verified": 1,
+    "money": 12.34,
+    "moral": 70,
+    "uname": "Example Account",
+    "vipStatus": 1,
+    "vipType": 2,
+    "vip": {
+      "type": 2,
+      "status": 1,
+      "label": {
+        "path": "",
+        "text": "Example Membership Label",
+        "label_theme": "annual_vip"
+      }
+    },
+    "coins_num": 5,
+    "wallet": {
+      "mid": 100000001,
+      "bcoin_balance": 3,
+      "coupon_balance": 0
+    }
+  }
+}

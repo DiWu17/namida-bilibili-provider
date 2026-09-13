@@ -1,0 +1,50 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "info": {
+      "id": 200000001,
+      "fid": 200000001,
+      "mid": 100000001,
+      "attr": 0,
+      "title": "Default favorites",
+      "media_count": 2
+    },
+    "medias": [
+      {
+        "id": 170001,
+        "type": 2,
+        "title": "Example Public Bilibili Video",
+        "cover": "http://i0.hdslb.com/bfs/archive/example-single.jpg",
+        "duration": 212,
+        "upper": {
+          "mid": 123456,
+          "name": "Example UP",
+          "face": "http://i0.hdslb.com/bfs/face/example-up.jpg"
+        },
+        "bvid": "BV1xx411c7mD",
+        "pubtime": 1700000000,
+        "fav_time": 1710000000,
+        "attr": 0
+      },
+      {
+        "id": 170002,
+        "type": 2,
+        "title": "Multi Part Example Video",
+        "cover": "http://i0.hdslb.com/bfs/archive/example-multi.jpg",
+        "duration": 390,
+        "upper": {
+          "mid": 123457,
+          "name": "Second UP",
+          "face": "http://i0.hdslb.com/bfs/face/example-up-2.jpg"
+        },
+        "bvid": "BV1yy411c7mE",
+        "pubtime": 1700001000,
+        "fav_time": 1710001000,
+        "attr": 0
+      }
+    ],
+    "ttl": 1
+  }
+}

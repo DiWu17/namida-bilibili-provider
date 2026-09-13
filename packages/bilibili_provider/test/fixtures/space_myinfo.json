@@ -1,0 +1,29 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "mid": 100000001,
+    "name": "Example Account",
+    "sex": "保密",
+    "face": "http://i0.hdslb.com/bfs/face/example-account.jpg",
+    "sign": "De-sensitized offline fixture signature.",
+    "rank": 10000,
+    "level": 4,
+    "jointime": 0,
+    "moral": 70,
+    "silence": 0,
+    "coins": 12.34,
+    "fans_badge": true,
+    "following": 42,
+    "follower": 128,
+    "birthday": "1990-01-01",
+    "vip": {
+      "type": 2,
+      "status": 1,
+      "label": {
+        "text": "Example Membership Label"
+      }
+    }
+  }
+}

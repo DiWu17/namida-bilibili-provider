@@ -1,0 +1,12 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "url": "",
+    "refresh_token": "fixture-refresh-token-77aa",
+    "timestamp": 1710000000,
+    "code": 0,
+    "message": ""
+  }
+}

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
@@ -9,12 +8,17 @@ import '../models/bilibili_api_models.dart';
 import '../parser/bilibili_dash_parser.dart';
 import '../parser/bilibili_metadata_parser.dart';
 import '../parser/bilibili_url_parser.dart';
+import 'bilibili_http.dart';
 
-/// HTTP/API boundary for Bilibili.
+/// HTTP/API boundary for Bilibili video playback.
 ///
 /// The provider maps these platform models into provider-neutral DTOs. Keeping
 /// HTTP code here lets future Bilibili API changes stay contained in this file
 /// and its parser siblings.
+///
+/// Request plumbing is shared with the account layer through
+/// [BilibiliHttpTransport], which is the single place cookies are attached and
+/// the single place that guarantees credentials are never logged.
 class BilibiliClient {
   BilibiliClient({
     this.auth = const AnonymousBilibiliAuthProvider(),
@@ -25,10 +29,17 @@ class BilibiliClient {
     this.debug = false,
     this.requestTimeout = const Duration(seconds: 15),
     this.maxShortLinkRedirects = 5,
+    void Function(String message)? onDebugLog,
   }) : _metadataParser = metadataParser ?? const BilibiliMetadataParser(),
        _playbackParser = playbackParser ?? const BilibiliDashParser(),
        _urlParser = urlParser ?? const BilibiliUrlParser(),
-       _httpClient = httpClient ?? http.Client(),
+       _http = BilibiliHttpTransport(
+         auth: auth,
+         httpClient: httpClient,
+         debug: debug,
+         requestTimeout: requestTimeout,
+         onDebugLog: onDebugLog,
+       ),
        assert(maxShortLinkRedirects > 0);
 
   final BilibiliAuthProvider auth;
@@ -39,7 +50,7 @@ class BilibiliClient {
   final BilibiliMetadataParser _metadataParser;
   final BilibiliDashParser _playbackParser;
   final BilibiliUrlParser _urlParser;
-  final http.Client _httpClient;
+  final BilibiliHttpTransport _http;
 
   static final RegExp _bvidPattern = RegExp(r'^BV[0-9A-Za-z]{10}$');
   static final Set<int> _redirectStatusCodes = <int>{301, 302, 303, 307, 308};
@@ -68,7 +79,7 @@ class BilibiliClient {
     }
 
     final uri = Uri.https('api.bilibili.com', '/x/web-interface/view', query);
-    final body = await _getString(uri);
+    final body = await _http.getString(uri);
     return _metadataParser.parseVideoInfoResponse(body);
   }
 
@@ -105,10 +116,10 @@ class BilibiliClient {
     };
 
     final uri = Uri.https('api.bilibili.com', '/x/player/playurl', query);
-    final body = await _getString(uri);
+    final body = await _http.getString(uri);
     return _playbackParser.parsePlaybackResponse(
       body,
-      headers: _requestHeaders(),
+      headers: _http.requestHeaders(),
     );
   }
 
@@ -119,11 +130,11 @@ class BilibiliClient {
     for (var hop = 0; hop <= maxShortLinkRedirects; hop++) {
       final request = http.Request('GET', current)
         ..followRedirects = false
-        ..headers.addAll(_requestHeaders());
+        ..headers.addAll(_http.requestHeaders());
 
       final http.StreamedResponse response;
       try {
-        response = await _httpClient.send(request).timeout(requestTimeout);
+        response = await _http.httpClient.send(request).timeout(requestTimeout);
       } on TimeoutException catch (error, stackTrace) {
         throw BilibiliNetworkException(
           'Bilibili short-link request timed out.',
@@ -169,61 +180,13 @@ class BilibiliClient {
         return current;
       }
 
-      _throwForHttpStatus(statusCode, headers: response.headers);
+      _http.throwForHttpStatus(statusCode, headers: response.headers);
     }
 
     throw BilibiliNetworkException(
       'Bilibili short-link exceeded the maximum redirect count '
       '($maxShortLinkRedirects).',
     );
-  }
-
-  Future<String> _getString(Uri uri) async {
-    final http.Response response;
-    try {
-      response = await _httpClient
-          .get(uri, headers: _requestHeaders())
-          .timeout(requestTimeout);
-    } on TimeoutException catch (error, stackTrace) {
-      throw BilibiliNetworkException(
-        'Bilibili request timed out.',
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    } catch (error, stackTrace) {
-      throw BilibiliNetworkException(
-        'Bilibili request failed before receiving a response.',
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    if (response.statusCode != 200) {
-      _throwForHttpStatus(response.statusCode, headers: response.headers);
-    }
-
-    try {
-      return utf8.decode(response.bodyBytes);
-    } on FormatException catch (error, stackTrace) {
-      throw BilibiliParseException(
-        'Bilibili response was not valid UTF-8.',
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  Map<String, String> _requestHeaders() {
-    final headers = <String, String>{
-      ...auth.requestHeaders,
-      'Accept': 'application/json, text/plain, */*',
-    };
-
-    final cookie = auth.cookieHeader;
-    if (cookie != null && cookie.isNotEmpty) {
-      headers['Cookie'] = cookie;
-    }
-    return headers;
   }
 
   Future<void> _drainResponse(http.StreamedResponse response) async {
@@ -233,43 +196,5 @@ class BilibiliClient {
       // The redirect body is irrelevant. Response-body errors are re-checked
       // by the next hop or by the final response handling path.
     }
-  }
-
-  Never _throwForHttpStatus(int statusCode, {Map<String, String>? headers}) {
-    if (statusCode == 401 || statusCode == 403) {
-      throw BilibiliAccessDeniedException(
-        'Bilibili request was denied with HTTP $statusCode.',
-        httpStatusCode: statusCode,
-      );
-    }
-    if (statusCode == 404) {
-      throw BilibiliNotFoundException(
-        'Bilibili content was not found.',
-        httpStatusCode: statusCode,
-      );
-    }
-    if (statusCode == 429) {
-      throw BilibiliRateLimitException(
-        'Bilibili rate limit was reached.',
-        httpStatusCode: statusCode,
-        retryAfter: _parseRetryAfter(headers),
-      );
-    }
-    throw BilibiliNetworkException(
-      'Bilibili request failed with HTTP $statusCode.',
-      httpStatusCode: statusCode,
-    );
-  }
-
-  Duration? _parseRetryAfter(Map<String, String>? headers) {
-    final raw = headers?['retry-after'];
-    if (raw == null) {
-      return null;
-    }
-    final seconds = int.tryParse(raw);
-    if (seconds == null || seconds < 0) {
-      return null;
-    }
-    return Duration(seconds: seconds);
   }
 }

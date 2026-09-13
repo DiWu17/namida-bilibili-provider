@@ -47,6 +47,20 @@ final class BilibiliAccessDeniedException extends BilibiliException {
   });
 }
 
+/// The caller is not signed in, the session expired, or the csrf token needed
+/// for a write request is missing/rejected.
+///
+/// Instances must never carry cookie, `SESSDATA`, or csrf values in [message].
+final class BilibiliAuthenticationException extends BilibiliException {
+  const BilibiliAuthenticationException(
+    super.message, {
+    super.httpStatusCode,
+    super.platformErrorCode,
+    super.cause,
+    super.stackTrace,
+  });
+}
+
 /// A non-zero Bilibili API code that does not map to a more specific failure.
 final class BilibiliApiException extends BilibiliException {
   const BilibiliApiException(

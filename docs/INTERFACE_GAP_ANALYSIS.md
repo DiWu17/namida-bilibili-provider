@@ -1,4 +1,9 @@
-﻿# Namida / YoutiPie Interface Gap Analysis
+# Namida / YoutiPie Interface Gap Analysis
+
+> Updated after Stage 8-9 (Bilibili account layer). See
+> [BILIBILI_ACCOUNT_LAYER.md](BILIBILI_ACCOUNT_LAYER.md) for the implemented
+> account/personal-data API. Sections 1, 2 and 5-6 are unchanged apart from the
+> notes added at the end of this file.
 
 Reference project:
 
@@ -115,25 +120,26 @@ Bilibili provider today. Namida currently depends on private packages.
 
 | Original Namida / YoutiPie interface | Our Bilibili interface | Status |
 |---|---|---|
-| `YoutiAccountManager.signIn(...)` | No Bilibili login flow |  |
-| `YoutiPie.cookies` | `BilibiliAuthProvider` / `BilibiliSession` explicit cookie injection |  partial |
-| `YoutiPie.cookies.signOut(userChannel)` | No sign-out API |  |
-| `YoutiPie.cookies.setAccount(userChannel)` | No account switching |  |
-| `YoutiPie.cookies.setAnonymous()` | `AnonymousBilibiliAuthProvider` / `BilibiliProvider.anonymous()` |  partial |
-| `YoutiPie.cookies.activeAccountChannel` | No active-account model |  |
-| `YoutiPie.cookies.signedInAccounts` | No multi-account storage |  |
-| `YoutiPie.cookies.canAddMultiAccounts` | No multi-account setting |  |
-| `YoutiPie.cookies.addOnAccountChanged(...)` | No account-change listener |  |
-| `YoutiPie.activeAccountDetails` | No current-account model |  |
-| `UserChannelInfo` | No Bilibili user info model |  |
-| `YoutiLoginProgress` | No login-progress model |  |
-| `AccountCookiesValidity` | No cookie-validity model |  |
-| Cookie persistence in encrypted storage | No cookie store |  |
-| `YoutubeAccountController.signIn(...)` | No Bilibili account controller |  |
-| `YoutubeAccountController.signOut(...)` | No Bilibili account controller |  |
-| `YoutubeAccountController.setAccountActive(...)` | No Bilibili account controller |  |
-| `YoutubeAccountController.setAccountAnonymous()` | `BilibiliProvider.anonymous()` exists |  partial |
-| `YoutubeAccountController.current` (YoutiPie.cookies) | No equivalent |  |
+| `YoutiAccountManager.signIn(...)` | `BilibiliAccountManager.signIn(cookieHeader)` / `signInWithCookies(cookies)` |  |
+| `YoutiPie.cookies` | `BilibiliCookies` + `BilibiliAccountAuthProvider` |  |
+| `YoutiPie.cookies.signOut(userChannel)` | `BilibiliAccountManager.signOut(accountKey)` |  |
+| `YoutiPie.cookies.setAccount(userChannel)` | `BilibiliAccountManager.switchAccount(accountKey)` |  |
+| `YoutiPie.cookies.setAnonymous()` | `BilibiliAccountManager.setAnonymous()` (also `BilibiliProvider.anonymous()`) |  |
+| `YoutiPie.cookies.activeAccountChannel` | `BilibiliAccountManager.activeAccountKey` |  |
+| `YoutiPie.cookies.signedInAccounts` | `BilibiliAccountManager.signedInAccounts` |  |
+| `YoutiPie.cookies.canAddMultiAccounts` | `allowMultipleAccounts` / `maxAccounts` / `canAddMultipleAccounts` |  |
+| `YoutiPie.cookies.addOnAccountChanged(...)` | `BilibiliAccountManager.onAccountChanged` |  |
+| `YoutiPie.activeAccountDetails` | `BilibiliAccountManager.activeAccountDetails` (`BilibiliAccountInfo`) |  |
+| `UserChannelInfo` | `BilibiliAccountInfo` (mid, name, avatar, sign, level, counts) |  |
+| `YoutiLoginProgress` | No login-progress model; sign-in is one validated call |  |
+| `AccountCookiesValidity` | `BilibiliCookieValidity` / `BilibiliSessionState` |  |
+| Cookie persistence in encrypted storage | `BilibiliCookieStore` + `ConditionalBilibiliCookieStore` + plain-text `PlainTextFileBilibiliCookieStore` (`io.dart`) |  partial |
+| `YoutubeAccountController.signIn(...)` | `BilibiliAccountManager.signIn(...)` |  |
+| `YoutubeAccountController.signOut(...)` | `BilibiliAccountManager.signOut(...)` |  |
+| `YoutubeAccountController.setAccountActive(...)` | `BilibiliAccountManager.switchAccount(...)` |  |
+| `YoutubeAccountController.setAccountAnonymous()` | `BilibiliAccountManager.setAnonymous()` |  |
+| `YoutubeAccountController.current` (YoutiPie.cookies) | `BilibiliAccountManager.activeSession` / `authProvider` |  |
+| QR-code / password / SMS login flow | Not implemented; explicit user-provided cookies only |  |
 | Membership / Patreon / Supabase subscription integration | No Bilibili equivalent |  N/A |
 | `YoutiPieOperation` account/membership gating | No equivalent |  N/A |
 
@@ -149,28 +155,34 @@ abstract interface class BilibiliAuthProvider {
 ```dart
 class AnonymousBilibiliAuthProvider implements BilibiliAuthProvider
 class SessionBilibiliAuthProvider implements BilibiliAuthProvider
+class BilibiliAccountAuthProvider implements BilibiliAuthProvider   // follows the active session
 class BilibiliSession
 ```
 
-This only allows:
+Stage 8 added:
 
 ```text
-caller supplies a cookie manually
-BilibiliClient attaches cookie to requests
+BilibiliCookies                       redaction-safe cookie jar (parse / fromUserInput / Set-Cookie)
+BilibiliCookieStore                   persistence boundary
+InMemoryBilibiliCookieStore           default store; nothing is written to disk
+ConditionalBilibiliCookieStore        runtime "remember this login" switch
+PlainTextFileBilibiliCookieStore      io.dart entry point; plain-text file, opt-in
+BilibiliCookieStoreState              stores cookies + the active account key
+BilibiliAccountSession                accountId + cookies + name/avatar
+BilibiliSessionState                  anonymous | authenticated | expired | csrfInvalid | unknown
+BilibiliCookieValidity                cookie check result, never carries credentials
+BilibiliAccountManager                restore / signIn / switch / signOut / setAnonymous
+BilibiliAccountClient.getNav          x/web-interface/nav
+BilibiliAccountClient.getMyInfo       x/space/myinfo
+BilibiliAccountParser                 nav + myinfo parsing
 ```
 
-It does not provide:
+This still does **not** provide:
 
 ```text
-login
 QR login
 password login
-cookie persistence
-account switching
-account info
-favorites
-history
-subscriptions
+an encrypted (keychain / DPAPI) cookie store
 ```
 
 ---
@@ -179,35 +191,39 @@ subscriptions
 
 | Original Namida / YoutiPie interface | Our Bilibili interface | Status |
 |---|---|---|
-| `YoutubeInfoController.userplaylist.getUserPlaylists(...)` | No Bilibili favorites/playlist listing |  |
-| `YoutubeInfoController.userplaylist.createPlaylist(...)` | No user playlist creation |  |
-| `YoutubeInfoController.userplaylist.editPlaylist(...)` | No user playlist editing |  |
-| `YoutubeInfoController.userplaylist.getPlaylistEditInfo(...)` | No playlist edit info |  |
+| `YoutubeInfoController.userplaylist.getUserPlaylists(...)` | `BilibiliAccountClient.getCreatedFavoriteFolders(mid:)` |  partial |
+| `YoutubeInfoController.userplaylist.createPlaylist(...)` | No Bilibili favorite-folder creation |  |
+| `YoutubeInfoController.userplaylist.editPlaylist(...)` | No favorite-folder editing/renaming |  |
+| `YoutubeInfoController.userplaylist.getPlaylistEditInfo(...)` | `BilibiliAccountClient.getFavoriteFolderInfo(mediaId:)` |  partial |
 | `YoutubeInfoController.userplaylist.addHostedPlaylistToLibrary(...)` | No remote playlist import |  |
 | `YoutubeInfoController.userplaylist.removeHostedPlaylistFromLibrary(...)` | No remote playlist removal |  |
-| `YoutubePlaylistController.favouriteButtonOnPressed(...)` | No Bilibili favorite/favourite toggle |  |
-| Local favourite playlists | No Bilibili personal playlist model |  |
-| `YoutubeInfoController.userchannel.fetchUserChannels(...)` | No Bilibili account channels/subscriptions |  |
-| `YoutubeInfoController.userchannel.fetchUserChannelsAllVideos(...)` | No subscribed-channel video feed |  |
+| `YoutubePlaylistController.favouriteButtonOnPressed(...)` | `BilibiliAccountClient.addFavorite` / `removeFavorite` / `dealFavorite` |  |
+| Local favourite playlists | `BilibiliFavoriteFolder` + `BilibiliFavoritePage` |  partial |
+| `YoutubeInfoController.userchannel.fetchUserChannels(...)` | No Bilibili following list |  |
+| `YoutubeInfoController.userchannel.fetchUserChannelsAllVideos(...)` | No subscribed-UP video feed |  |
 | `YoutubeInfoController.history.fetchHistory(...)` | No Bilibili account history |  |
 | `YoutubeInfoController.history.markVideoWatched(...)` | No Bilibili history write |  |
 | `YoutubeSubscriptionsController.toggleChannelSubscription(...)` | No Bilibili subscriptions |  |
 | `YoutubeSubscriptionsController.saveFile()` | No subscription persistence |  |
 | `YoutubeHistoryController` local history manager | No Bilibili history manager |  |
-| Favorite/favlist URL support | Current parser rejects `space.bilibili.com/.../favlist` |  |
-| Account profile / `nav` / `myinfo` | No current-user profile API |  |
-| Account-owned videos / folders / collections | No user content APIs |  |
+| Favorite/favlist URL support | `BilibiliFavListUrlParser` (kept out of `BilibiliProvider.canHandle`) |  |
+| Account profile / `nav` / `myinfo` | `getNav` / `getMyInfo` / `BilibiliAccountInfo` |  |
+| Account-owned videos / folders / collections | Favorite folders only; collections are Stage 12 |  partial |
+| Favorite paging | `getFavoriteResources`, `paginateFavoriteResources`, `getAllFavoriteMedia` |  |
+| Favorite item -> playable media | `BilibiliAccountParser.toOnlineMedia` + `BilibiliProvider.resolveById` |  |
 
-Relevant Bilibili account APIs that are not implemented:
+Relevant Bilibili account APIs and their current state:
 
 ```text
-/x/web-interface/nav
-/x/space/myinfo
-/x/v3/fav/folder/created/list-all
-/x/v3/fav/resource/list
-/x/v2/history
-/x/relation/followings
-/x/v3/fav/folder/created/list-all
+/x/web-interface/nav                    implemented
+/x/space/myinfo                         implemented
+/x/v3/fav/folder/created/list-all       implemented
+/x/v3/fav/folder/info                   implemented
+/x/v3/fav/resource/list                 implemented (paged)
+/x/v3/fav/resource/deal                 implemented (add / remove)
+/x/v2/history                           Stage 10
+/x/relation/followings                  Stage 11
+/x/polymer/web-space/seasons_series_list Stage 12
 ```
 
 ---
@@ -291,6 +307,12 @@ Relevant Bilibili account APIs that are not implemented:
 | expiry inference |  partial |
 | HTTP Range validation |  |
 | standalone Flutter playback |  |
+| `BilibiliAccountClient.getNav` / `getMyInfo` |  |
+| `BilibiliAccountManager` (signIn / signOut / setAnonymous / switching) |  |
+| `BilibiliCookies` + `BilibiliCookieStore` |  |
+| `BilibiliFavListUrlParser` |  |
+| favorite folder listing / paging / add / remove |  |
+| `BilibiliProvider.resolveById` (favorites -> playable bridge) |  |
 
 ---
 
@@ -300,18 +322,20 @@ Implemented:
 
 ```text
 ordinary public Bilibili video playback
+explicit-cookie Bilibili sign-in, account switching and sign-out
+current account profile (nav / myinfo)
+favorite folders, paged favorite items, favorite add/remove
+favorite-list URL parsing
 ```
 
 Not implemented:
 
 ```text
-login
-cookies persistence
-account info
-favorites
-user playlists
+QR / password / SMS login
+an encrypted cookie store implementation (interface only)
 history
-subscriptions
+subscriptions / following
+user playlists / collections
 search
 feed
 notifications
@@ -321,9 +345,13 @@ downloads
 live
 bangumi
 subtitles
-advanced account/personal-data APIs
 ```
 
-This matches the original MVP scope.
+This matches the intended scope of the account-layer stages. The playback
+provider contract is unchanged; the only addition is the additive
+`BilibiliProvider.resolveById` bridge, which favorite/history/playlist items need
+because those APIs never expose a CID.
 
-The next step, if desired, is to implement a separate Bilibili account/personal-data layer while keeping the playback provider contract unchanged.
+Next stages are history (Stage 10), following/subscriptions (Stage 11), and user
+playlists/collections (Stage 12). See
+[BILIBILI_ACCOUNT_LAYER.md](BILIBILI_ACCOUNT_LAYER.md).
