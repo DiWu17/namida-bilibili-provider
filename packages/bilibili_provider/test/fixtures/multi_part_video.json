@@ -1,0 +1,48 @@
+﻿{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "bvid": "BV1yy411c7mE",
+    "aid": 170002,
+    "videos": 3,
+    "tid": 21,
+    "tname": "日常",
+    "copyright": 1,
+    "pic": "http://i0.hdslb.com/bfs/archive/example-multi.jpg",
+    "title": "Example Multi-Part Video",
+    "pubdate": 1700000100,
+    "ctime": 1700000100,
+    "desc": "A de-sensitized fixture for multi-part metadata tests.",
+    "state": 0,
+    "duration": 350,
+    "owner": {
+      "mid": 654321,
+      "name": "Example Multi UP",
+      "face": "http://i0.hdslb.com/bfs/face/example-multi-up.jpg"
+    },
+    "pages": [
+      {
+        "cid": 111111111,
+        "page": 1,
+        "from": "vupload",
+        "part": "P1 - Opening",
+        "duration": 100
+      },
+      {
+        "cid": 222222222,
+        "page": 2,
+        "from": "vupload",
+        "part": "P2 - Main Topic",
+        "duration": 130
+      },
+      {
+        "cid": 333333333,
+        "page": 3,
+        "from": "vupload",
+        "part": "P3 - Ending",
+        "duration": 120
+      }
+    ]
+  }
+}

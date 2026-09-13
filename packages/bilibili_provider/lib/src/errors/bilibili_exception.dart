@@ -47,6 +47,17 @@ final class BilibiliAccessDeniedException extends BilibiliException {
   });
 }
 
+/// A non-zero Bilibili API code that does not map to a more specific failure.
+final class BilibiliApiException extends BilibiliException {
+  const BilibiliApiException(
+    super.message, {
+    super.httpStatusCode,
+    super.platformErrorCode,
+    super.cause,
+    super.stackTrace,
+  });
+}
+
 final class BilibiliParseException extends BilibiliException {
   const BilibiliParseException(
     super.message, {

@@ -1,0 +1,36 @@
+﻿{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "bvid": "BV1xx411c7mD",
+    "aid": 170001,
+    "videos": 1,
+    "tid": 21,
+    "tname": "日常",
+    "copyright": 1,
+    "pic": "http://i0.hdslb.com/bfs/archive/example-single.jpg",
+    "title": "Example Public Bilibili Video",
+    "pubdate": 1700000000,
+    "ctime": 1700000000,
+    "desc": "A de-sensitized fixture for offline metadata tests.",
+    "state": 0,
+    "duration": 212,
+    "owner": {
+      "mid": 123456,
+      "name": "Example UP",
+      "face": "http://i0.hdslb.com/bfs/face/example-up.jpg"
+    },
+    "pages": [
+      {
+        "cid": 987654321,
+        "page": 1,
+        "from": "vupload",
+        "part": "P1 - Example Single Part",
+        "duration": 212,
+        "vid": "BV1xx411c7mD",
+        "weblink": "https://www.bilibili.com/video/BV1xx411c7mD"
+      }
+    ]
+  }
+}

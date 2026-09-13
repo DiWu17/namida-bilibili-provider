@@ -1,0 +1,16 @@
+﻿{
+  "code": 0,
+  "message": "0",
+  "data": {
+    "bvid": "BV1zz411c7mF",
+    "aid": "170003",
+    "title": "Minimal Metadata Fixture",
+    "pages": [
+      {
+        "cid": "444444444",
+        "page": "1",
+        "part": "Only Part"
+      }
+    ]
+  }
+}

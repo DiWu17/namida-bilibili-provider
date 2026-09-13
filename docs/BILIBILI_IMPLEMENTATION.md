@@ -50,3 +50,30 @@ Each mapped stream must carry the headers required by its CDN URL:
 4. Preserve quality ids and human-readable labels.
 5. Keep `baseUrl`/`backupUrl` arrays distinct from audio/video kinds.
 6. Reject unsupported or unavailable content with structured errors.
+
+## Stage 2 implementation status
+
+Stage 2 implements anonymous metadata resolution:
+
+```text
+Bilibili URL
+ -> BilibiliUrlParser
+ -> optional bounded b23.tv redirect resolution
+ -> BilibiliClient GET /x/web-interface/view
+ -> BilibiliMetadataParser
+ -> OnlineMedia + OnlineMediaPart/CID
+```
+
+Implementation details:
+
+- `BilibiliApiResponse` decodes the common `{code, message, data}` envelope.
+- Non-zero Bilibili API codes map to structured exceptions.
+- `BilibiliMetadataParser` tolerates missing optional fields and stringly
+  typed numeric values.
+- `OnlineMediaId.subId` is set to the selected CID.
+- `?p=N` and `OnlineMediaResolveOptions.preferredPartIndex` select a part.
+- `BilibiliClient.resolveShortUrl` follows at most
+  `maxShortLinkRedirects` hops and rejects redirects outside recognized
+  Bilibili hosts.
+- `BilibiliClient` accepts an injected `http.Client`, which keeps client and
+  provider tests fully offline via `MockClient`.

@@ -5,7 +5,8 @@ class BilibiliPart {
     required this.page,
     required this.title,
     this.duration,
-  });
+  }) : assert(cid != ''),
+       assert(page > 0);
 
   /// Bilibili CID (content id) for this part.
   final String cid;

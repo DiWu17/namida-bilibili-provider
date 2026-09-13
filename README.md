@@ -8,10 +8,11 @@ Namida or on the private `youtipie` package. The goal is to make the Bilibili
 side complete, testable, and playable on its own so a future Namida adapter only
 has to map a small provider-neutral playback contract into Namida's player.
 
-> Current status: Stage 0 / Stage 1. The provider-neutral contract, repository
-> bootstrap, URL parser, and offline tests are in place. Metadata, DASH
-> resolution, real stream validation, and the standalone Flutter player are
-> implemented in later stages.
+> Current status: Stage 0-2. The provider-neutral contract, repository
+> bootstrap, BV/av/b23 URL parser, short-link safety limits, metadata mapping,
+> fixtures, and offline tests are in place. DASH resolution, real stream
+> validation, and the standalone Flutter player are implemented in later
+> stages.
 
 ## Problem
 
@@ -82,8 +83,7 @@ MVP target:
 - `https://b23.tv/...`
 - `?p=N` part selection
 
-Currently the parser recognizes all of these. Short-link redirect resolution is
-implemented in Stage 2.
+The parser and metadata stage handle all of these, including bounded redirects for b23.tv short links.
 
 ## Supported playback features (MVP target)
 
@@ -100,8 +100,10 @@ implemented in Stage 2.
 
 ## Test status
 
-Offline tests are required to pass without network access. Online integration
-tests are tagged and run only through the scheduled/manual workflow.
+Offline tests are required to pass without network access. The current suite
+contains 39 offline tests: 7 provider-neutral model tests and 32 Bilibili
+URL/client/metadata-resolve tests. Online integration tests are tagged and run
+only through the scheduled/manual workflow.
 
 Run locally:
 
@@ -145,9 +147,12 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 
 - [x] Stage 0  repository bootstrap, provider-neutral DTOs/contract, tests, CI
 - [x] Stage 1  BV/av/b23 URL parser and part parameter
-- [ ] Stage 2  metadata, uploader, cover, duration, parts, CID resolution
+- [x] Stage 2  metadata, uploader, cover, duration, parts, CID resolution
 - [ ] Stage 3  DASH playback resolver
 - [ ] Stage 4  stream HTTP validation
 - [ ] Stage 5  standalone Flutter player
 - [ ] Stage 6  complete documentation
 - [ ] Stage 7  optional untested Namida reference adapter
+
+
+

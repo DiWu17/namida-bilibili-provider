@@ -9,6 +9,7 @@ environment:
 dependencies:
   online_media_provider:
     path: ../online_media_provider
+  http: ^1.5.0
 
 dev_dependencies:
   test: ^1.26.0
