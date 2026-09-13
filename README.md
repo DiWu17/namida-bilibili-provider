@@ -158,6 +158,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - No paid, DRM, region-locked, or member-only bypass.
 - No live, bangumi, comments, danmaku, search, or recommendations in the MVP.
 - The standalone Flutter example is implemented, but GUI playback must be run manually with `flutter run` in a supported desktop/mobile environment.
+- The first Windows media_kit build downloads libmpv/ANGLE from GitHub release assets; restricted networks may need the offline workaround in `example/standalone_player/README.md`.
 
 ## Development stages
 
@@ -169,6 +170,7 @@ See [docs/NAMIDA_INTEGRATION.md](docs/NAMIDA_INTEGRATION.md).
 - [x] Stage 5  standalone Flutter player
 - [ ] Stage 6  complete documentation
 - [ ] Stage 7  optional untested Namida reference adapter
+
 
 
 

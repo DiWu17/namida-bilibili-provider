@@ -52,3 +52,58 @@ flutter create --platforms=android,ios,linux,macos,web .
 
 Then run `flutter run` for the desired device.
 
+
+## Windows media_kit download troubleshooting
+
+`media_kit_libs_windows_video` downloads two GitHub release archives during the
+first Windows build:
+
+```text
+mpv-dev-x86_64-20230924-git-652a1dd.7z
+MD5: a832ef24b3a6ff97cd2560b5b9d04cd8
+
+ANGLE.7z
+MD5: e866f13e8d552348058afaafe869b1ed
+```
+
+If the build fails with:
+
+```text
+Integrity check failed, please try to re-build project again.
+```
+
+and the archive under `build/windows/x64/` is 0 bytes, your network could not
+reach GitHub release assets.
+
+Options:
+
+1. Enable a VPN/proxy and run:
+
+```powershell
+flutter clean
+$env:HTTP_PROXY = "http://127.0.0.1:7890"
+$env:HTTPS_PROXY = "http://127.0.0.1:7890"
+flutter run -d windows
+```
+
+Use your actual proxy host/port.
+
+2. Download these files in a browser/with a proxy:
+
+```text
+https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-09-24/mpv-dev-x86_64-20230924-git-652a1dd.7z
+https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z
+```
+
+Then place them before running the app:
+
+```powershell
+.\tool\place_windows_media_kit_archives.ps1 `
+  -MpvArchive C:\Downloads\mpv-dev-x86_64-20230924-git-652a1dd.7z `
+  -AngleArchive C:\Downloads\ANGLE.7z
+
+flutter run -d windows
+```
+
+Do not run `flutter clean` after placing the archives unless you will place them
+again, because `flutter clean` deletes the `build/` directory.
